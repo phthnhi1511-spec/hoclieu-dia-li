@@ -1,12 +1,122 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Header from "../components/Header";
+import { buildR2ProxyFileUrl } from "../lib/r2";
+import { getMaterialKind, getTypeName, parseMediaList } from "../lib/materialUtils";
 import { supabase } from "../lib/supabaseClient";
 import "./HocLieuTheoChuDe.css";
 
-function getTypeName(material, types) {
-  const type = types.find((item) => item.id === material.loai_hoc_lieu_id);
-  return type?.ten_loai || "Chưa phân loại";
+const ITEMS_PER_PAGE = 6;
+const SKELETON_CARD_COUNT = 6;
+
+function MaterialListCard({ duongDan, material, types }) {
+  const typeName = getTypeName(material, types);
+  const detailPath = `/hoc-lieu/${duongDan}/${material.id}`;
+  const imageList = parseMediaList(material.duong_dan_anh_dai_dien);
+  const thumbnailUrl = imageList[0] ? buildR2ProxyFileUrl(imageList[0]) : "";
+  const materialKind = getMaterialKind(material, types);
+
+  return (
+    <article className="material-list-card">
+      {thumbnailUrl ? (
+        <img className="material-list-thumb" src={thumbnailUrl} alt={material.tieu_de} />
+      ) : (
+        <div className={`material-list-thumb material-list-thumb-${materialKind}`}>
+          <span>{typeName}</span>
+        </div>
+      )}
+
+      <div className="material-list-body">
+        <div className="material-meta">
+          <span>{typeName}</span>
+          {material.noi_bat ? <span>Nổi bật</span> : null}
+          {material.ten_nguon ? <span>Nguồn: {material.ten_nguon}</span> : null}
+        </div>
+
+        <h2>{material.tieu_de}</h2>
+        <p>{material.mo_ta || "Chưa có mô tả cho học liệu này."}</p>
+
+        <div className="material-actions">
+          <Link to={detailPath}>Xem chi tiết</Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MaterialListCardSkeleton() {
+  return (
+    <article className="material-list-card material-list-card-skeleton" aria-hidden="true">
+      <div className="material-list-thumb material-list-thumb-skeleton">
+        <div className="material-skeleton material-skeleton-thumb" />
+      </div>
+
+      <div className="material-list-body">
+        <div className="material-meta">
+          <div className="material-skeleton material-skeleton-chip" />
+          <div className="material-skeleton material-skeleton-chip" />
+        </div>
+
+        <div className="material-skeleton material-skeleton-title" />
+        <div className="material-skeleton material-skeleton-text material-skeleton-text-wide" />
+        <div className="material-skeleton material-skeleton-text material-skeleton-text-medium" />
+
+        <div className="material-actions">
+          <div className="material-skeleton material-skeleton-button" />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MaterialsControlsSkeleton() {
+  return (
+    <section className="materials-controls materials-controls-skeleton" aria-hidden="true">
+      <div>
+        <div className="material-skeleton material-skeleton-label" />
+        <div className="material-skeleton material-skeleton-input" />
+      </div>
+      <div>
+        <div className="material-skeleton material-skeleton-label" />
+        <div className="material-skeleton material-skeleton-input" />
+      </div>
+    </section>
+  );
+}
+
+function MaterialsPagination({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
+
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  return (
+    <nav className="materials-pagination" aria-label="Phân trang học liệu">
+      <button type="button" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
+        Trang trước
+      </button>
+
+      <div className="materials-pagination-pages">
+        {pages.map((page) => (
+          <button
+            key={page}
+            type="button"
+            className={page === currentPage ? "is-active" : ""}
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Trang sau
+      </button>
+    </nav>
+  );
 }
 
 function HocLieuTheoChuDe() {
@@ -16,8 +126,10 @@ function HocLieuTheoChuDe() {
   const [materials, setMaterials] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedTypeId, setSelectedTypeId] = useState("tat-ca");
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const deferredSearchText = useDeferredValue(searchText);
 
   useEffect(() => {
     let isMounted = true;
@@ -28,6 +140,7 @@ function HocLieuTheoChuDe() {
       setTopic(null);
       setMaterials([]);
       setSelectedTypeId("tat-ca");
+      setCurrentPage(1);
 
       const { data: topicData, error: topicError } = await supabase
         .from("chu_de")
@@ -87,7 +200,7 @@ function HocLieuTheoChuDe() {
   }, [duongDan]);
 
   const filteredMaterials = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase();
+    const keyword = deferredSearchText.trim().toLowerCase();
 
     return materials.filter((material) => {
       const matchesType =
@@ -100,7 +213,14 @@ function HocLieuTheoChuDe() {
 
       return matchesType && matchesSearch;
     });
-  }, [materials, searchText, selectedTypeId, types]);
+  }, [materials, deferredSearchText, selectedTypeId, types]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE));
+  const currentPageSafe = Math.min(currentPage, totalPages);
+  const paginatedMaterials = filteredMaterials.slice(
+    (currentPageSafe - 1) * ITEMS_PER_PAGE,
+    currentPageSafe * ITEMS_PER_PAGE,
+  );
 
   return (
     <div>
@@ -111,76 +231,93 @@ function HocLieuTheoChuDe() {
           <p className="materials-eyebrow">Học liệu số</p>
           <h1>{topic?.ten_chu_de || "Học liệu theo chủ đề"}</h1>
           <p>
-            Xem, tìm kiếm và tải học liệu theo chủ đề Địa lí kinh tế Việt Nam lớp 9.
+            {topic?.mo_ta ||
+              "Xem danh sách học liệu theo chủ đề, chọn đúng tài liệu rồi mở trang chi tiết để đọc, xem hoặc tải."}
           </p>
         </section>
 
-        <section className="materials-controls">
-          <label>
-            <span>Tìm kiếm học liệu</span>
-            <input
-              type="search"
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Nhập tên tài liệu, mô tả hoặc loại học liệu"
-            />
-          </label>
-
-          <label>
-            <span>Lọc theo loại học liệu</span>
-            <select
-              value={selectedTypeId}
-              onChange={(event) => setSelectedTypeId(event.target.value)}
-            >
-              <option value="tat-ca">Tất cả loại học liệu</option>
-              {types.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.ten_loai}
-                </option>
-              ))}
-            </select>
-          </label>
-        </section>
-
         {loading ? (
-          <section className="materials-status">Đang tải học liệu...</section>
-        ) : error ? (
-          <section className="materials-status materials-error">{error}</section>
-        ) : filteredMaterials.length === 0 ? (
-          <section className="materials-status">
-            Chưa có học liệu phù hợp. Bạn có thể thêm học liệu trong trang quản trị.
-          </section>
+          <>
+            <MaterialsControlsSkeleton />
+
+            <section className="materials-list materials-list-skeleton">
+              {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
+                <MaterialListCardSkeleton key={index} />
+              ))}
+            </section>
+
+            <div className="materials-pagination materials-pagination-skeleton" aria-hidden="true">
+              <div className="material-skeleton material-skeleton-button" />
+              <div className="materials-pagination-pages">
+                <div className="material-skeleton material-skeleton-pagination-dot" />
+                <div className="material-skeleton material-skeleton-pagination-dot" />
+                <div className="material-skeleton material-skeleton-pagination-dot" />
+              </div>
+              <div className="material-skeleton material-skeleton-button" />
+            </div>
+          </>
         ) : (
-          <section className="materials-grid">
-            {filteredMaterials.map((material) => (
-              <article className="material-card" key={material.id}>
-                {material.duong_dan_anh_dai_dien ? (
-                  <img src={material.duong_dan_anh_dai_dien} alt={material.tieu_de} />
-                ) : (
-                  <div className="material-placeholder">{getTypeName(material, types)}</div>
-                )}
+          <>
+            <section className="materials-controls">
+              <label>
+                <span>Tìm kiếm học liệu</span>
+                <input
+                  type="search"
+                  value={searchText}
+                  onChange={(event) => {
+                    setSearchText(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Nhập tên tài liệu, mô tả hoặc loại học liệu"
+                />
+              </label>
 
-                <div className="material-card-body">
-                  <div className="material-meta">
-                    <span>{getTypeName(material, types)}</span>
-                    {material.noi_bat && <span>Nổi bật</span>}
-                  </div>
+              <label>
+                <span>Lọc theo loại học liệu</span>
+                <select
+                  value={selectedTypeId}
+                  onChange={(event) => {
+                    setSelectedTypeId(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="tat-ca">Tất cả loại học liệu</option>
+                  {types.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.ten_loai}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
 
-                  <h2>{material.tieu_de}</h2>
-                  <p>{material.mo_ta || "Chưa có mô tả cho học liệu này."}</p>
+            {error ? (
+              <section className="materials-status materials-error">{error}</section>
+            ) : filteredMaterials.length === 0 ? (
+              <section className="materials-status">
+                Chưa có học liệu phù hợp. Bạn có thể thêm học liệu trong trang quản trị.
+              </section>
+            ) : (
+              <>
+                <section className="materials-list">
+                  {paginatedMaterials.map((material) => (
+                    <MaterialListCard
+                      key={material.id}
+                      duongDan={duongDan}
+                      material={material}
+                      types={types}
+                    />
+                  ))}
+                </section>
 
-                  <div className="material-actions">
-                    <a href={material.duong_dan_file} target="_blank" rel="noreferrer">
-                      Xem trực tiếp
-                    </a>
-                    <a href={material.duong_dan_file} download>
-                      Tải về
-                    </a>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </section>
+                <MaterialsPagination
+                  currentPage={currentPageSafe}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </>
+            )}
+          </>
         )}
 
         <div className="materials-back">

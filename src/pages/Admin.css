@@ -164,6 +164,61 @@
   resize: vertical;
 }
 
+.admin-field-help {
+  color: #607166;
+  display: block;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.admin-field-help-error {
+  color: #b71c1c;
+}
+
+.admin-inline-link {
+  color: #0b8b4d;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 8px;
+  text-decoration: none;
+}
+
+.admin-inline-link:hover {
+  text-decoration: underline;
+}
+
+.admin-upload-preview {
+  margin-top: 10px;
+}
+
+.admin-upload-preview strong {
+  color: #263b2b;
+  display: block;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.admin-upload-preview-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+}
+
+.admin-upload-preview-item {
+  border: 1px solid #dce7df;
+  border-radius: 8px;
+  display: block;
+  overflow: hidden;
+}
+
+.admin-upload-preview-item img {
+  display: block;
+  height: 110px;
+  object-fit: cover;
+  width: 100%;
+}
+
 .admin-success,
 .admin-error {
   border-radius: 6px;

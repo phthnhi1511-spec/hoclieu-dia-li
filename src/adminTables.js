@@ -2,6 +2,57 @@ const commonStatusFields = [
   { name: "da_xuat_ban", label: "Đã xuất bản", type: "boolean" },
 ];
 
+const references = {
+  chuDe: { table: "chu_de", labelField: "ten_chu_de", entityLabel: "chủ đề" },
+  loaiHocLieu: {
+    table: "loai_hoc_lieu",
+    labelField: "ten_loai",
+    entityLabel: "loại học liệu",
+  },
+  baiKiemTra: {
+    table: "bai_kiem_tra",
+    labelField: "tieu_de",
+    entityLabel: "bài kiểm tra",
+  },
+  cauHoiKiemTra: {
+    table: "cau_hoi_kiem_tra",
+    labelField: "noi_dung_cau_hoi",
+    entityLabel: "câu hỏi kiểm tra",
+  },
+  dapAnKiemTra: {
+    table: "dap_an_kiem_tra",
+    labelField: "noi_dung_dap_an",
+    entityLabel: "đáp án kiểm tra",
+  },
+  ketQuaKiemTra: {
+    table: "ket_qua_kiem_tra",
+    labelField: "ho_ten_hoc_sinh",
+    descriptionField: "ten_lop",
+    entityLabel: "kết quả kiểm tra",
+  },
+  khaoSat: {
+    table: "khao_sat",
+    labelField: "tieu_de",
+    entityLabel: "khảo sát",
+  },
+  cauHoiKhaoSat: {
+    table: "cau_hoi_khao_sat",
+    labelField: "noi_dung_cau_hoi",
+    entityLabel: "câu hỏi khảo sát",
+  },
+  luaChonKhaoSat: {
+    table: "lua_chon_khao_sat",
+    labelField: "noi_dung_lua_chon",
+    entityLabel: "lựa chọn khảo sát",
+  },
+  phanHoiKhaoSat: {
+    table: "phan_hoi_khao_sat",
+    labelField: "ho_ten_nguoi_tra_loi",
+    descriptionField: "ten_lop",
+    entityLabel: "phản hồi khảo sát",
+  },
+};
+
 export const adminTables = [
   {
     name: "chu_de",
@@ -31,10 +82,37 @@ export const adminTables = [
     fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
-      { name: "chu_de_id", label: "ID chủ đề", type: "number" },
-      { name: "loai_hoc_lieu_id", label: "ID loại học liệu", type: "number" },
-      { name: "duong_dan_file", label: "Đường dẫn file", required: true },
-      { name: "duong_dan_anh_dai_dien", label: "Đường dẫn ảnh đại diện" },
+      { name: "chu_de_id", label: "Chủ đề", type: "number", reference: references.chuDe },
+      {
+        name: "loai_hoc_lieu_id",
+        label: "Loại học liệu",
+        type: "number",
+        reference: references.loaiHocLieu,
+      },
+      {
+        name: "duong_dan_file",
+        label: "File hoặc link học liệu",
+        required: true,
+        upload: {
+          provider: "cloudflare-r2",
+          functionName: "r2-presign-upload",
+          accept: ".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.rar,.mp4,.mp3,.png,.jpg,.jpeg",
+          helperText:
+            "Chọn file để tải lên Cloudflare R2. Nếu là phiếu học tập hoặc tài liệu mở bằng link ngoài, dán URL trực tiếp ở ô bên dưới.",
+        },
+      },
+      {
+        name: "duong_dan_anh_dai_dien",
+        label: "Ảnh đại diện / thư viện ảnh",
+        upload: {
+          provider: "cloudflare-r2",
+          functionName: "r2-presign-upload",
+          accept: ".png,.jpg,.jpeg,.webp",
+          multiple: true,
+          helperText:
+            "Có thể chọn nhiều ảnh để tải lên. Mỗi ảnh sẽ được lưu thành một dòng, phù hợp cho infographic, sơ đồ tư duy, phiếu học tập preview.",
+        },
+      },
       { name: "ten_nguon", label: "Tên nguồn" },
       { name: "lop", label: "Lớp", type: "number" },
       { name: "noi_bat", label: "Nổi bật", type: "boolean" },
@@ -47,7 +125,7 @@ export const adminTables = [
     fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
-      { name: "chu_de_id", label: "ID chủ đề", type: "number" },
+      { name: "chu_de_id", label: "Chủ đề", type: "number", reference: references.chuDe },
       { name: "thoi_gian_lam_bai_phut", label: "Thời gian làm bài", type: "number" },
       ...commonStatusFields,
     ],
@@ -56,7 +134,13 @@ export const adminTables = [
     name: "cau_hoi_kiem_tra",
     label: "Câu hỏi kiểm tra",
     fields: [
-      { name: "bai_kiem_tra_id", label: "ID bài kiểm tra", type: "number", required: true },
+      {
+        name: "bai_kiem_tra_id",
+        label: "Bài kiểm tra",
+        type: "number",
+        required: true,
+        reference: references.baiKiemTra,
+      },
       { name: "noi_dung_cau_hoi", label: "Nội dung câu hỏi", type: "textarea", required: true },
       { name: "duong_dan_anh_cau_hoi", label: "Đường dẫn ảnh câu hỏi" },
       { name: "giai_thich_dap_an", label: "Giải thích đáp án", type: "textarea" },
@@ -68,7 +152,13 @@ export const adminTables = [
     name: "dap_an_kiem_tra",
     label: "Đáp án kiểm tra",
     fields: [
-      { name: "cau_hoi_id", label: "ID câu hỏi", type: "number", required: true },
+      {
+        name: "cau_hoi_id",
+        label: "Câu hỏi kiểm tra",
+        type: "number",
+        required: true,
+        reference: references.cauHoiKiemTra,
+      },
       { name: "noi_dung_dap_an", label: "Nội dung đáp án", required: true },
       { name: "la_dap_an_dung", label: "Là đáp án đúng", type: "boolean" },
       { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
@@ -78,7 +168,12 @@ export const adminTables = [
     name: "ket_qua_kiem_tra",
     label: "Kết quả kiểm tra",
     fields: [
-      { name: "bai_kiem_tra_id", label: "ID bài kiểm tra", type: "number" },
+      {
+        name: "bai_kiem_tra_id",
+        label: "Bài kiểm tra",
+        type: "number",
+        reference: references.baiKiemTra,
+      },
       { name: "ho_ten_hoc_sinh", label: "Họ tên học sinh" },
       { name: "ten_lop", label: "Tên lớp" },
       { name: "ten_truong", label: "Tên trường" },
@@ -91,9 +186,25 @@ export const adminTables = [
     name: "chi_tiet_ket_qua_kiem_tra",
     label: "Chi tiết kết quả kiểm tra",
     fields: [
-      { name: "ket_qua_id", label: "ID kết quả", type: "number", required: true },
-      { name: "cau_hoi_id", label: "ID câu hỏi", type: "number" },
-      { name: "dap_an_da_chon_id", label: "ID đáp án đã chọn", type: "number" },
+      {
+        name: "ket_qua_id",
+        label: "Kết quả kiểm tra",
+        type: "number",
+        required: true,
+        reference: references.ketQuaKiemTra,
+      },
+      {
+        name: "cau_hoi_id",
+        label: "Câu hỏi kiểm tra",
+        type: "number",
+        reference: references.cauHoiKiemTra,
+      },
+      {
+        name: "dap_an_da_chon_id",
+        label: "Đáp án đã chọn",
+        type: "number",
+        reference: references.dapAnKiemTra,
+      },
       { name: "la_dap_an_dung", label: "Là đáp án đúng", type: "boolean" },
     ],
   },
@@ -103,7 +214,7 @@ export const adminTables = [
     fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
-      { name: "chu_de_id", label: "ID chủ đề", type: "number" },
+      { name: "chu_de_id", label: "Chủ đề", type: "number", reference: references.chuDe },
       { name: "duong_dan_anh_ban_do", label: "Đường dẫn ảnh bản đồ" },
       { name: "duong_dan_file_ban_do", label: "Đường dẫn file bản đồ" },
       { name: "duong_dan_nhung", label: "Đường dẫn nhúng" },
@@ -134,7 +245,7 @@ export const adminTables = [
       { name: "duong_dan", label: "Đường dẫn", required: true },
       { name: "tom_tat", label: "Tóm tắt", type: "textarea" },
       { name: "noi_dung", label: "Nội dung", type: "textarea" },
-      { name: "chu_de_id", label: "ID chủ đề", type: "number" },
+      { name: "chu_de_id", label: "Chủ đề", type: "number", reference: references.chuDe },
       { name: "duong_dan_anh_dai_dien", label: "Đường dẫn ảnh đại diện" },
       { name: "ten_nguon", label: "Tên nguồn" },
       { name: "duong_dan_nguon", label: "Đường dẫn nguồn" },
@@ -147,7 +258,7 @@ export const adminTables = [
     label: "Dữ liệu thống kê",
     fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
-      { name: "chu_de_id", label: "ID chủ đề", type: "number" },
+      { name: "chu_de_id", label: "Chủ đề", type: "number", reference: references.chuDe },
       { name: "ten_chi_so", label: "Tên chỉ số", required: true },
       { name: "ten_dia_phuong", label: "Tên địa phương" },
       { name: "nam", label: "Năm", type: "number" },
@@ -172,7 +283,13 @@ export const adminTables = [
     name: "cau_hoi_khao_sat",
     label: "Câu hỏi khảo sát",
     fields: [
-      { name: "khao_sat_id", label: "ID khảo sát", type: "number", required: true },
+      {
+        name: "khao_sat_id",
+        label: "Khảo sát",
+        type: "number",
+        required: true,
+        reference: references.khaoSat,
+      },
       { name: "noi_dung_cau_hoi", label: "Nội dung câu hỏi", type: "textarea", required: true },
       { name: "kieu_cau_hoi", label: "Kiểu câu hỏi", required: true },
       { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
@@ -182,7 +299,13 @@ export const adminTables = [
     name: "lua_chon_khao_sat",
     label: "Lựa chọn khảo sát",
     fields: [
-      { name: "cau_hoi_id", label: "ID câu hỏi", type: "number", required: true },
+      {
+        name: "cau_hoi_id",
+        label: "Câu hỏi khảo sát",
+        type: "number",
+        required: true,
+        reference: references.cauHoiKhaoSat,
+      },
       { name: "noi_dung_lua_chon", label: "Nội dung lựa chọn", required: true },
       { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
     ],
@@ -191,7 +314,12 @@ export const adminTables = [
     name: "phan_hoi_khao_sat",
     label: "Phản hồi khảo sát",
     fields: [
-      { name: "khao_sat_id", label: "ID khảo sát", type: "number" },
+      {
+        name: "khao_sat_id",
+        label: "Khảo sát",
+        type: "number",
+        reference: references.khaoSat,
+      },
       { name: "ho_ten_nguoi_tra_loi", label: "Họ tên người trả lời" },
       { name: "ten_lop", label: "Tên lớp" },
       { name: "ten_truong", label: "Tên trường" },
@@ -202,10 +330,26 @@ export const adminTables = [
     name: "cau_tra_loi_khao_sat",
     label: "Câu trả lời khảo sát",
     fields: [
-      { name: "phan_hoi_id", label: "ID phản hồi", type: "number", required: true },
-      { name: "cau_hoi_id", label: "ID câu hỏi", type: "number" },
+      {
+        name: "phan_hoi_id",
+        label: "Phản hồi khảo sát",
+        type: "number",
+        required: true,
+        reference: references.phanHoiKhaoSat,
+      },
+      {
+        name: "cau_hoi_id",
+        label: "Câu hỏi khảo sát",
+        type: "number",
+        reference: references.cauHoiKhaoSat,
+      },
       { name: "noi_dung_tra_loi", label: "Nội dung trả lời", type: "textarea" },
-      { name: "lua_chon_da_chon_id", label: "ID lựa chọn đã chọn", type: "number" },
+      {
+        name: "lua_chon_da_chon_id",
+        label: "Lựa chọn đã chọn",
+        type: "number",
+        reference: references.luaChonKhaoSat,
+      },
     ],
   },
   {

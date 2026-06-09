@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { adminTables } from "../adminTables";
+import { functionsBaseUrl, invokeFunction } from "../lib/functionsClient";
+import { buildR2FileUrl } from "../lib/r2";
+import { parseMediaList } from "../lib/materialUtils";
 import { supabase } from "../lib/supabaseClient";
 import "./Admin.css";
 
@@ -7,7 +10,13 @@ const sessionKey = "hoclieu_admin_unlocked";
 
 function getInitialForm(fields) {
   return fields.reduce((values, field) => {
-    values[field.name] = field.type === "boolean" ? false : "";
+    if (field.defaultValue !== undefined) {
+      values[field.name] = field.defaultValue;
+    } else if (field.name === "da_xuat_ban") {
+      values[field.name] = true;
+    } else {
+      values[field.name] = field.type === "boolean" ? false : "";
+    }
     return values;
   }, {});
 }
@@ -20,11 +29,66 @@ function prepareValue(value, field) {
   return value;
 }
 
+function buildReferenceLabel(row, reference) {
+  const mainLabel = row?.[reference.labelField];
+  const description = reference.descriptionField ? row?.[reference.descriptionField] : "";
+
+  if (mainLabel && description) {
+    return `${mainLabel} (${description})`;
+  }
+
+  if (mainLabel) return String(mainLabel);
+  return `ID ${row.id}`;
+}
+
 function formatCellValue(value) {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Có" : "Không";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
+}
+
+function UploadPreviewGallery({ imageUrls, title }) {
+  if (imageUrls.length === 0) return null;
+
+  return (
+    <div className="admin-upload-preview">
+      <strong>{title}</strong>
+      <div className="admin-upload-preview-grid">
+        {imageUrls.map((imageUrl, index) => (
+          <a
+            key={`${imageUrl}-${index}`}
+            href={imageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="admin-upload-preview-item"
+          >
+            <img src={imageUrl} alt={`Preview ${index + 1}`} />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LocalFilesPreview({ files, title }) {
+  const previewUrls = useMemo(
+    () =>
+      (files || [])
+        .filter((file) => file.type.startsWith("image/"))
+        .map((file) => URL.createObjectURL(file)),
+    [files],
+  );
+
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
+  if (previewUrls.length === 0) return null;
+
+  return <UploadPreviewGallery imageUrls={previewUrls} title={title} />;
 }
 
 function Admin() {
@@ -48,6 +112,8 @@ function Admin() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [referenceOptions, setReferenceOptions] = useState({});
+  const [uploadFiles, setUploadFiles] = useState({});
 
   async function loadRows() {
     setLoading(true);
@@ -70,14 +136,81 @@ function Admin() {
     setLoading(false);
   }
 
+  async function loadReferenceOptions(table = selectedTable) {
+    const referenceFields = table.fields.filter((field) => field.reference);
+
+    if (referenceFields.length === 0) {
+      setReferenceOptions({});
+      return;
+    }
+
+    setReferenceOptions(
+      referenceFields.reduce((result, field) => {
+        result[field.name] = {
+          options: [],
+          loading: true,
+          error: "",
+        };
+        return result;
+      }, {}),
+    );
+
+    const optionEntries = await Promise.all(
+      referenceFields.map(async (field) => {
+        const { table: referenceTable, labelField, descriptionField } = field.reference;
+        const selectFields = ["id", labelField];
+
+        if (descriptionField) {
+          selectFields.push(descriptionField);
+        }
+
+        const { data, error: loadReferenceError } = await supabase
+          .from(referenceTable)
+          .select(selectFields.join(", "))
+          .order(labelField, { ascending: true });
+
+        if (loadReferenceError) {
+          return [
+            field.name,
+            {
+              options: [],
+              loading: false,
+              error: loadReferenceError.message,
+            },
+          ];
+        }
+
+        return [
+          field.name,
+          {
+            options: (data || []).map((row) => ({
+              value: row.id,
+              label: buildReferenceLabel(row, field.reference),
+            })),
+            loading: false,
+            error: "",
+          },
+        ];
+      }),
+    );
+
+    setReferenceOptions(Object.fromEntries(optionEntries));
+  }
+
   useEffect(() => {
     if (isUnlocked) {
       queueMicrotask(() => {
         loadRows();
+        loadReferenceOptions();
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTableName, isUnlocked]);
+
+  function resetTransientState() {
+    setReferenceOptions({});
+    setUploadFiles({});
+  }
 
   function handleLogin(event) {
     event.preventDefault();
@@ -101,6 +234,7 @@ function Admin() {
     localStorage.removeItem(sessionKey);
     setIsUnlocked(false);
     setPassword("");
+    resetTransientState();
   }
 
   function handleChange(field, value) {
@@ -115,6 +249,14 @@ function Admin() {
     setSelectedTableName(tableName);
     setFormData(getInitialForm(nextTable.fields));
     setEditingId(null);
+    resetTransientState();
+  }
+
+  function handleFileChange(fieldName, files, isMultiple = false) {
+    setUploadFiles((current) => ({
+      ...current,
+      [fieldName]: isMultiple ? files : files[0] || null,
+    }));
   }
 
   function handleEdit(row) {
@@ -132,6 +274,7 @@ function Admin() {
 
     setEditingId(row.id);
     setFormData(nextForm);
+    setUploadFiles({});
     setMessage(`Đang sửa bản ghi ID ${row.id}`);
     setError("");
   }
@@ -139,6 +282,76 @@ function Admin() {
   function resetForm() {
     setEditingId(null);
     setFormData(getInitialForm(selectedTable.fields));
+    setUploadFiles({});
+  }
+
+  async function uploadFileToCloudflare(field, file) {
+    const functionName = field.upload?.functionName;
+
+    if (!functionName) {
+      throw new Error("Chưa cấu hình function upload cho trường này.");
+    }
+
+    const contentType = file.type || "application/octet-stream";
+
+    if (functionsBaseUrl.startsWith("/")) {
+      const query = new URLSearchParams({
+        fileName: file.name,
+        contentType,
+      });
+
+      const response = await fetch(`${functionsBaseUrl}/${functionName}?${query.toString()}`, {
+        method: "POST",
+        body: file,
+      });
+
+      let data;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || data?.message || `Không tải được file lên Cloudflare (${response.status}).`,
+        );
+      }
+
+      if (!data?.objectKey) {
+        throw new Error("Kết quả upload local không hợp lệ.");
+      }
+
+      return data.objectKey;
+    }
+
+    const { data, error: functionError } = await invokeFunction(functionName, {
+      fileName: file.name,
+      contentType,
+    });
+
+    if (functionError) {
+      throw new Error(`Không tạo được URL upload: ${functionError.message}`);
+    }
+
+    if (!data?.uploadUrl || !data?.objectKey) {
+      throw new Error("Function upload trả về dữ liệu không hợp lệ.");
+    }
+
+    const uploadResponse = await fetch(data.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": contentType,
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Tải file lên Cloudflare thất bại (${uploadResponse.status}).`);
+    }
+
+    return data.objectKey;
   }
 
   async function handleSubmit(event) {
@@ -147,23 +360,56 @@ function Admin() {
     setError("");
     setMessage("");
 
-    const payload = {};
-    selectedTable.fields.forEach((field) => {
-      payload[field.name] = prepareValue(formData[field.name], field);
-    });
+    try {
+      const payload = {};
 
-    const request = editingId
-      ? supabase.from(selectedTable.name).update(payload).eq("id", editingId)
-      : supabase.from(selectedTable.name).insert(payload);
+      for (const field of selectedTable.fields) {
+        const selectedFile = uploadFiles[field.name];
 
-    const { error: saveError } = await request;
+        if (field.upload?.multiple && Array.isArray(selectedFile) && selectedFile.length > 0) {
+          const existingValues = parseMediaList(formData[field.name]);
+          const uploadedValues = [];
 
-    if (saveError) {
-      setError(saveError.message);
-    } else {
+          for (const file of selectedFile) {
+            uploadedValues.push(await uploadFileToCloudflare(field, file));
+          }
+
+          payload[field.name] = [...existingValues, ...uploadedValues].join("\n");
+          continue;
+        }
+
+        if (field.upload && selectedFile) {
+          payload[field.name] = await uploadFileToCloudflare(field, selectedFile);
+          continue;
+        }
+
+        if (
+          field.upload &&
+          field.required &&
+          !formData[field.name] &&
+          (!Array.isArray(selectedFile) || selectedFile.length === 0)
+        ) {
+          throw new Error("Vui lòng chọn file học liệu để tải lên Cloudflare.");
+        }
+
+        payload[field.name] = prepareValue(formData[field.name], field);
+      }
+
+      const request = editingId
+        ? supabase.from(selectedTable.name).update(payload).eq("id", editingId)
+        : supabase.from(selectedTable.name).insert(payload);
+
+      const { error: saveError } = await request;
+
+      if (saveError) {
+        throw new Error(saveError.message);
+      }
+
       setMessage(editingId ? "Đã cập nhật bản ghi." : "Đã thêm bản ghi mới.");
       resetForm();
       await loadRows();
+    } catch (submitError) {
+      setError(submitError.message || "Không thể lưu dữ liệu.");
     }
 
     setSaving(false);
@@ -270,6 +516,97 @@ function Admin() {
                   required={field.required}
                   rows={4}
                 />
+              ) : field.reference ? (
+                <>
+                  <select
+                    value={
+                      formData[field.name] === null || formData[field.name] === undefined
+                        ? ""
+                        : String(formData[field.name])
+                    }
+                    onChange={(event) => handleChange(field, event.target.value)}
+                    required={field.required}
+                    disabled={referenceOptions[field.name]?.loading}
+                  >
+                    <option value="">
+                      {referenceOptions[field.name]?.loading
+                        ? `Đang tải ${field.reference.entityLabel}...`
+                        : `Chọn ${field.reference.entityLabel}`}
+                    </option>
+                    {(referenceOptions[field.name]?.options || []).map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {referenceOptions[field.name]?.error && (
+                    <small className="admin-field-help admin-field-help-error">
+                      Không tải được danh sách: {referenceOptions[field.name].error}
+                    </small>
+                  )}
+                </>
+              ) : field.upload ? (
+                <>
+                  <input
+                    type="file"
+                    accept={field.upload.accept}
+                    multiple={field.upload.multiple}
+                    onChange={(event) =>
+                      handleFileChange(
+                        field.name,
+                        Array.from(event.target.files || []),
+                        field.upload.multiple,
+                      )
+                    }
+                  />
+                  {field.upload.multiple ? (
+                    <textarea
+                      value={formData[field.name] ?? ""}
+                      onChange={(event) => handleChange(field, event.target.value)}
+                      placeholder="Mỗi ảnh hoặc link một dòng. Có thể vừa dán link vừa tải thêm ảnh."
+                      rows={4}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={formData[field.name] ?? ""}
+                      onChange={(event) => handleChange(field, event.target.value)}
+                      placeholder="Tải file lên để tự điền, hoặc dán link ngoài tại đây"
+                    />
+                  )}
+                  <small className="admin-field-help">
+                    {field.upload.helperText}
+                  </small>
+                  {uploadFiles[field.name] && (
+                    <small className="admin-field-help">
+                      {Array.isArray(uploadFiles[field.name])
+                        ? `Đã chọn ${uploadFiles[field.name].length} file`
+                        : `File đã chọn: ${uploadFiles[field.name].name}`}
+                    </small>
+                  )}
+                  {field.upload.multiple ? (
+                    <>
+                      <LocalFilesPreview
+                        files={Array.isArray(uploadFiles[field.name]) ? uploadFiles[field.name] : []}
+                        title="Ảnh vừa chọn"
+                      />
+                      <UploadPreviewGallery
+                        imageUrls={parseMediaList(formData[field.name]).map((item) => buildR2FileUrl(item))}
+                        title="Ảnh hiện tại"
+                      />
+                    </>
+                  ) : null}
+                  {formData[field.name] && !field.upload.multiple && (
+                    <a
+                      className="admin-inline-link"
+                      href={buildR2FileUrl(formData[field.name])}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Mở file hiện tại
+                    </a>
+                  )}
+                </>
               ) : field.type === "boolean" ? (
                 <select
                   value={String(formData[field.name])}
@@ -330,7 +667,11 @@ function Admin() {
                         <button type="button" onClick={() => handleEdit(row)}>
                           Sửa
                         </button>
-                        <button type="button" className="admin-danger" onClick={() => handleDelete(row)}>
+                        <button
+                          type="button"
+                          className="admin-danger"
+                          onClick={() => handleDelete(row)}
+                        >
                           Xóa
                         </button>
                       </td>

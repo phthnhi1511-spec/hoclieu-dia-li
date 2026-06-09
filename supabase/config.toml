@@ -1,0 +1,8 @@
+[functions.r2-presign-upload]
+verify_jwt = false
+
+[functions.r2-sign-file-url]
+verify_jwt = false
+
+[functions.r2-file-proxy]
+verify_jwt = false
