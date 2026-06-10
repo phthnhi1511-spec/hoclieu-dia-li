@@ -236,6 +236,20 @@ function HocLieuTheoChuDe() {
           </p>
         </section>
 
+        <section className="materials-topbar">
+          <div className="materials-breadcrumbs">
+            <Link to="/">Trang chủ</Link>
+            <span>/</span>
+            <span>Học liệu</span>
+            <span>/</span>
+            <strong>{topic?.ten_chu_de || "Đang tải chủ đề"}</strong>
+          </div>
+
+          <Link to="/" className="materials-topbar-action">
+            Về trang chủ
+          </Link>
+        </section>
+
         {loading ? (
           <>
             <MaterialsControlsSkeleton />

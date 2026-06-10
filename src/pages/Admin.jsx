@@ -4,6 +4,7 @@ import { functionsBaseUrl, invokeFunction } from "../lib/functionsClient";
 import { buildR2FileUrl } from "../lib/r2";
 import { parseMediaList } from "../lib/materialUtils";
 import { supabase } from "../lib/supabaseClient";
+import AdminQuizBuilder from "./AdminQuizBuilder";
 import "./Admin.css";
 
 const sessionKey = "hoclieu_admin_unlocked";
@@ -17,6 +18,7 @@ function getInitialForm(fields) {
     } else {
       values[field.name] = field.type === "boolean" ? false : "";
     }
+
     return values;
   }, {});
 }
@@ -94,9 +96,7 @@ function LocalFilesPreview({ files, title }) {
 function Admin() {
   const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
   const [password, setPassword] = useState("");
-  const [isUnlocked, setIsUnlocked] = useState(
-    localStorage.getItem(sessionKey) === "true",
-  );
+  const [isUnlocked, setIsUnlocked] = useState(localStorage.getItem(sessionKey) === "true");
   const [loginError, setLoginError] = useState("");
 
   const [selectedTableName, setSelectedTableName] = useState(adminTables[0].name);
@@ -104,6 +104,7 @@ function Admin() {
     () => adminTables.find((table) => table.name === selectedTableName) || adminTables[0],
     [selectedTableName],
   );
+  const isQuizBuilderMode = selectedTableName === "quiz_builder";
 
   const [rows, setRows] = useState([]);
   const [formData, setFormData] = useState(() => getInitialForm(selectedTable.fields));
@@ -147,9 +148,9 @@ function Admin() {
     setReferenceOptions(
       referenceFields.reduce((result, field) => {
         result[field.name] = {
-          options: [],
-          loading: true,
           error: "",
+          loading: true,
+          options: [],
         };
         return result;
       }, {}),
@@ -173,9 +174,9 @@ function Admin() {
           return [
             field.name,
             {
-              options: [],
-              loading: false,
               error: loadReferenceError.message,
+              loading: false,
+              options: [],
             },
           ];
         }
@@ -183,12 +184,12 @@ function Admin() {
         return [
           field.name,
           {
-            options: (data || []).map((row) => ({
-              value: row.id,
-              label: buildReferenceLabel(row, field.reference),
-            })),
-            loading: false,
             error: "",
+            loading: false,
+            options: (data || []).map((row) => ({
+              label: buildReferenceLabel(row, field.reference),
+              value: row.id,
+            })),
           },
         ];
       }),
@@ -198,14 +199,14 @@ function Admin() {
   }
 
   useEffect(() => {
-    if (isUnlocked) {
-      queueMicrotask(() => {
-        loadRows();
-        loadReferenceOptions();
-      });
-    }
+    if (!isUnlocked || isQuizBuilderMode) return;
+
+    queueMicrotask(() => {
+      loadRows();
+      loadReferenceOptions();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTableName, isUnlocked]);
+  }, [selectedTableName, isUnlocked, isQuizBuilderMode]);
 
   function resetTransientState() {
     setReferenceOptions({});
@@ -249,6 +250,9 @@ function Admin() {
     setSelectedTableName(tableName);
     setFormData(getInitialForm(nextTable.fields));
     setEditingId(null);
+    setRows([]);
+    setError("");
+    setMessage("");
     resetTransientState();
   }
 
@@ -296,13 +300,13 @@ function Admin() {
 
     if (functionsBaseUrl.startsWith("/")) {
       const query = new URLSearchParams({
-        fileName: file.name,
         contentType,
+        fileName: file.name,
       });
 
       const response = await fetch(`${functionsBaseUrl}/${functionName}?${query.toString()}`, {
-        method: "POST",
         body: file,
+        method: "POST",
       });
 
       let data;
@@ -327,8 +331,8 @@ function Admin() {
     }
 
     const { data, error: functionError } = await invokeFunction(functionName, {
-      fileName: file.name,
       contentType,
+      fileName: file.name,
     });
 
     if (functionError) {
@@ -340,11 +344,11 @@ function Admin() {
     }
 
     const uploadResponse = await fetch(data.uploadUrl, {
-      method: "PUT",
+      body: file,
       headers: {
         "Content-Type": contentType,
       },
-      body: file,
+      method: "PUT",
     });
 
     if (!uploadResponse.ok) {
@@ -417,6 +421,7 @@ function Admin() {
 
   async function handleDelete(row) {
     const confirmed = window.confirm(`Xóa bản ghi ID ${row.id}?`);
+
     if (!confirmed) return;
 
     setError("");
@@ -436,6 +441,147 @@ function Admin() {
     await loadRows();
   }
 
+  function renderUploadField(field) {
+    return (
+      <>
+        <input
+          type="file"
+          accept={field.upload.accept}
+          multiple={field.upload.multiple}
+          onChange={(event) =>
+            handleFileChange(
+              field.name,
+              Array.from(event.target.files || []),
+              field.upload.multiple,
+            )
+          }
+        />
+
+        {field.upload.multiple ? (
+          <textarea
+            value={formData[field.name] ?? ""}
+            onChange={(event) => handleChange(field, event.target.value)}
+            placeholder="Mỗi ảnh hoặc link một dòng. Có thể vừa dán link vừa tải thêm ảnh."
+            rows={4}
+          />
+        ) : (
+          <input
+            type="text"
+            value={formData[field.name] ?? ""}
+            onChange={(event) => handleChange(field, event.target.value)}
+            placeholder="Tải file lên để tự điền, hoặc dán link ngoài tại đây"
+          />
+        )}
+
+        <small className="admin-field-help">{field.upload.helperText}</small>
+
+        {uploadFiles[field.name] ? (
+          <small className="admin-field-help">
+            {Array.isArray(uploadFiles[field.name])
+              ? `Đã chọn ${uploadFiles[field.name].length} file`
+              : `File đã chọn: ${uploadFiles[field.name].name}`}
+          </small>
+        ) : null}
+
+        {field.upload.multiple ? (
+          <>
+            <LocalFilesPreview
+              files={Array.isArray(uploadFiles[field.name]) ? uploadFiles[field.name] : []}
+              title="Ảnh vừa chọn"
+            />
+            <UploadPreviewGallery
+              imageUrls={parseMediaList(formData[field.name]).map((item) => buildR2FileUrl(item))}
+              title="Ảnh hiện tại"
+            />
+          </>
+        ) : null}
+
+        {formData[field.name] && !field.upload.multiple ? (
+          <a
+            className="admin-inline-link"
+            href={buildR2FileUrl(formData[field.name])}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Mở file hiện tại
+          </a>
+        ) : null}
+      </>
+    );
+  }
+
+  function renderField(field) {
+    if (field.type === "textarea") {
+      return (
+        <textarea
+          value={formData[field.name] ?? ""}
+          onChange={(event) => handleChange(field, event.target.value)}
+          required={field.required}
+          rows={4}
+        />
+      );
+    }
+
+    if (field.reference) {
+      return (
+        <>
+          <select
+            value={
+              formData[field.name] === null || formData[field.name] === undefined
+                ? ""
+                : String(formData[field.name])
+            }
+            onChange={(event) => handleChange(field, event.target.value)}
+            required={field.required}
+            disabled={referenceOptions[field.name]?.loading}
+          >
+            <option value="">
+              {referenceOptions[field.name]?.loading
+                ? `Đang tải ${field.reference.entityLabel}...`
+                : `Chọn ${field.reference.entityLabel}`}
+            </option>
+            {(referenceOptions[field.name]?.options || []).map((option) => (
+              <option key={option.value} value={String(option.value)}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          {referenceOptions[field.name]?.error ? (
+            <small className="admin-field-help admin-field-help-error">
+              Không tải được danh sách: {referenceOptions[field.name].error}
+            </small>
+          ) : null}
+        </>
+      );
+    }
+
+    if (field.upload) {
+      return renderUploadField(field);
+    }
+
+    if (field.type === "boolean") {
+      return (
+        <select
+          value={String(formData[field.name])}
+          onChange={(event) => handleChange(field, event.target.value)}
+        >
+          <option value="true">Có</option>
+          <option value="false">Không</option>
+        </select>
+      );
+    }
+
+    return (
+      <input
+        type={field.type || "text"}
+        value={formData[field.name] ?? ""}
+        onChange={(event) => handleChange(field, event.target.value)}
+        required={field.required}
+      />
+    );
+  }
+
   if (!isUnlocked) {
     return (
       <main className="admin-login-page">
@@ -453,7 +599,7 @@ function Admin() {
             autoComplete="current-password"
           />
 
-          {loginError && <div className="admin-error">{loginError}</div>}
+          {loginError ? <div className="admin-error">{loginError}</div> : null}
 
           <button type="submit">Vào trang quản trị</button>
         </form>
@@ -486,202 +632,98 @@ function Admin() {
             </option>
           ))}
         </select>
-        <button className="admin-secondary-button" type="button" onClick={loadRows}>
-          Tải lại
-        </button>
+        {!isQuizBuilderMode ? (
+          <button className="admin-secondary-button" type="button" onClick={loadRows}>
+            Tải lại
+          </button>
+        ) : (
+          <div />
+        )}
       </section>
 
       <section className="admin-layout">
-        <form className="admin-form" onSubmit={handleSubmit}>
-          <div className="admin-panel-title">
-            <h2>{editingId ? "Sửa bản ghi" : "Thêm bản ghi"}</h2>
-            {editingId && (
-              <button type="button" className="admin-text-button" onClick={resetForm}>
-                Hủy sửa
+        {isQuizBuilderMode ? (
+          <AdminQuizBuilder />
+        ) : (
+          <>
+            <form className="admin-form" onSubmit={handleSubmit}>
+              <div className="admin-panel-title">
+                <h2>{editingId ? "Sửa bản ghi" : "Thêm bản ghi"}</h2>
+                {editingId ? (
+                  <button type="button" className="admin-text-button" onClick={resetForm}>
+                    Hủy sửa
+                  </button>
+                ) : null}
+              </div>
+
+              {selectedTable.fields.map((field) => (
+                <label key={field.name} className="admin-field">
+                  <span>
+                    {field.label}
+                    {field.required ? " *" : ""}
+                  </span>
+                  {renderField(field)}
+                </label>
+              ))}
+
+              <button type="submit" disabled={saving}>
+                {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Thêm mới"}
               </button>
-            )}
-          </div>
+            </form>
 
-          {selectedTable.fields.map((field) => (
-            <label key={field.name} className="admin-field">
-              <span>
-                {field.label}
-                {field.required ? " *" : ""}
-              </span>
+            <section className="admin-table-panel">
+              <div className="admin-panel-title">
+                <h2>{selectedTable.label}</h2>
+                <p>Hiển thị tối đa 50 bản ghi mới nhất</p>
+              </div>
 
-              {field.type === "textarea" ? (
-                <textarea
-                  value={formData[field.name] ?? ""}
-                  onChange={(event) => handleChange(field, event.target.value)}
-                  required={field.required}
-                  rows={4}
-                />
-              ) : field.reference ? (
-                <>
-                  <select
-                    value={
-                      formData[field.name] === null || formData[field.name] === undefined
-                        ? ""
-                        : String(formData[field.name])
-                    }
-                    onChange={(event) => handleChange(field, event.target.value)}
-                    required={field.required}
-                    disabled={referenceOptions[field.name]?.loading}
-                  >
-                    <option value="">
-                      {referenceOptions[field.name]?.loading
-                        ? `Đang tải ${field.reference.entityLabel}...`
-                        : `Chọn ${field.reference.entityLabel}`}
-                    </option>
-                    {(referenceOptions[field.name]?.options || []).map((option) => (
-                      <option key={option.value} value={String(option.value)}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {referenceOptions[field.name]?.error && (
-                    <small className="admin-field-help admin-field-help-error">
-                      Không tải được danh sách: {referenceOptions[field.name].error}
-                    </small>
-                  )}
-                </>
-              ) : field.upload ? (
-                <>
-                  <input
-                    type="file"
-                    accept={field.upload.accept}
-                    multiple={field.upload.multiple}
-                    onChange={(event) =>
-                      handleFileChange(
-                        field.name,
-                        Array.from(event.target.files || []),
-                        field.upload.multiple,
-                      )
-                    }
-                  />
-                  {field.upload.multiple ? (
-                    <textarea
-                      value={formData[field.name] ?? ""}
-                      onChange={(event) => handleChange(field, event.target.value)}
-                      placeholder="Mỗi ảnh hoặc link một dòng. Có thể vừa dán link vừa tải thêm ảnh."
-                      rows={4}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData[field.name] ?? ""}
-                      onChange={(event) => handleChange(field, event.target.value)}
-                      placeholder="Tải file lên để tự điền, hoặc dán link ngoài tại đây"
-                    />
-                  )}
-                  <small className="admin-field-help">
-                    {field.upload.helperText}
-                  </small>
-                  {uploadFiles[field.name] && (
-                    <small className="admin-field-help">
-                      {Array.isArray(uploadFiles[field.name])
-                        ? `Đã chọn ${uploadFiles[field.name].length} file`
-                        : `File đã chọn: ${uploadFiles[field.name].name}`}
-                    </small>
-                  )}
-                  {field.upload.multiple ? (
-                    <>
-                      <LocalFilesPreview
-                        files={Array.isArray(uploadFiles[field.name]) ? uploadFiles[field.name] : []}
-                        title="Ảnh vừa chọn"
-                      />
-                      <UploadPreviewGallery
-                        imageUrls={parseMediaList(formData[field.name]).map((item) => buildR2FileUrl(item))}
-                        title="Ảnh hiện tại"
-                      />
-                    </>
-                  ) : null}
-                  {formData[field.name] && !field.upload.multiple && (
-                    <a
-                      className="admin-inline-link"
-                      href={buildR2FileUrl(formData[field.name])}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Mở file hiện tại
-                    </a>
-                  )}
-                </>
-              ) : field.type === "boolean" ? (
-                <select
-                  value={String(formData[field.name])}
-                  onChange={(event) => handleChange(field, event.target.value)}
-                >
-                  <option value="true">Có</option>
-                  <option value="false">Không</option>
-                </select>
+              {message ? <div className="admin-success">{message}</div> : null}
+              {error ? <div className="admin-error">{error}</div> : null}
+
+              {loading ? (
+                <p className="admin-empty">Đang tải dữ liệu...</p>
+              ) : rows.length === 0 ? (
+                <p className="admin-empty">Chưa có dữ liệu trong bảng này.</p>
               ) : (
-                <input
-                  type={field.type || "text"}
-                  value={formData[field.name] ?? ""}
-                  onChange={(event) => handleChange(field, event.target.value)}
-                  required={field.required}
-                />
-              )}
-            </label>
-          ))}
-
-          <button type="submit" disabled={saving}>
-            {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Thêm mới"}
-          </button>
-        </form>
-
-        <section className="admin-table-panel">
-          <div className="admin-panel-title">
-            <h2>{selectedTable.label}</h2>
-            <p>Hiển thị tối đa 50 bản ghi mới nhất</p>
-          </div>
-
-          {message && <div className="admin-success">{message}</div>}
-          {error && <div className="admin-error">{error}</div>}
-
-          {loading ? (
-            <p className="admin-empty">Đang tải dữ liệu...</p>
-          ) : rows.length === 0 ? (
-            <p className="admin-empty">Chưa có dữ liệu trong bảng này.</p>
-          ) : (
-            <div className="admin-table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    {selectedTable.fields.slice(0, 5).map((field) => (
-                      <th key={field.name}>{field.label}</th>
-                    ))}
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id}>
-                      <td>{row.id}</td>
-                      {selectedTable.fields.slice(0, 5).map((field) => (
-                        <td key={field.name}>{formatCellValue(row[field.name])}</td>
+                <div className="admin-table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        {selectedTable.fields.slice(0, 5).map((field) => (
+                          <th key={field.name}>{field.label}</th>
+                        ))}
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.id}>
+                          <td>{row.id}</td>
+                          {selectedTable.fields.slice(0, 5).map((field) => (
+                            <td key={field.name}>{formatCellValue(row[field.name])}</td>
+                          ))}
+                          <td className="admin-actions">
+                            <button type="button" onClick={() => handleEdit(row)}>
+                              Sửa
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-danger"
+                              onClick={() => handleDelete(row)}
+                            >
+                              Xóa
+                            </button>
+                          </td>
+                        </tr>
                       ))}
-                      <td className="admin-actions">
-                        <button type="button" onClick={() => handleEdit(row)}>
-                          Sửa
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-danger"
-                          onClick={() => handleDelete(row)}
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </section>
     </main>
   );

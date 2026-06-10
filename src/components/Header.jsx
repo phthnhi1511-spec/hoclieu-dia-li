@@ -67,7 +67,7 @@ function Header() {
         </div>
 
         <span>BẢN ĐỒ</span>
-        <span>LUYỆN TẬP</span>
+        <Link to="/luyen-tap">LUYỆN TẬP</Link>
         <span>KHẢO SÁT</span>
         <span>THƯ VIỆN</span>
       </nav>
