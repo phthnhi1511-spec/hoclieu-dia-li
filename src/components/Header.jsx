@@ -66,7 +66,7 @@ function Header() {
           </div>
         </div>
 
-        <span>BẢN ĐỒ</span>
+        <Link to="/ban-do">BẢN ĐỒ</Link>
         <Link to="/luyen-tap">LUYỆN TẬP</Link>
         <span>KHẢO SÁT</span>
         <span>THƯ VIỆN</span>

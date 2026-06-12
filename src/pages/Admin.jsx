@@ -4,6 +4,11 @@ import { functionsBaseUrl, invokeFunction } from "../lib/functionsClient";
 import { buildR2FileUrl } from "../lib/r2";
 import { parseMediaList } from "../lib/materialUtils";
 import { supabase } from "../lib/supabaseClient";
+import {
+  buildDefaultEconomicRegionRows,
+  normalizeVietnamName,
+  parseProvinceList,
+} from "../lib/vietnamMap";
 import AdminQuizBuilder from "./AdminQuizBuilder";
 import "./Admin.css";
 
@@ -48,6 +53,10 @@ function formatCellValue(value) {
   if (typeof value === "boolean") return value ? "Có" : "Không";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
+}
+
+function parseMultiSelectValues(value) {
+  return parseProvinceList(value);
 }
 
 function UploadPreviewGallery({ imageUrls, title }) {
@@ -115,6 +124,8 @@ function Admin() {
   const [error, setError] = useState("");
   const [referenceOptions, setReferenceOptions] = useState({});
   const [uploadFiles, setUploadFiles] = useState({});
+  const [seedingDefaults, setSeedingDefaults] = useState(false);
+  const isEconomicRegionTable = selectedTableName === "vung_kinh_te";
 
   async function loadRows() {
     setLoading(true);
@@ -243,6 +254,87 @@ function Admin() {
       ...current,
       [field.name]: value,
     }));
+  }
+
+  function updateMultiSelectField(field, nextValues) {
+    const orderedValues = (field.options || [])
+      .map((option) => option.value)
+      .filter((value) => nextValues.has(value));
+
+    handleChange(field, orderedValues.join("\n"));
+  }
+
+  function toggleMultiSelectValue(field, value) {
+    const nextValues = new Set(parseMultiSelectValues(formData[field.name]));
+
+    if (nextValues.has(value)) {
+      nextValues.delete(value);
+    } else {
+      nextValues.add(value);
+    }
+
+    updateMultiSelectField(field, nextValues);
+  }
+
+  async function handleSeedEconomicRegions() {
+    setSeedingDefaults(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const { data: existingRows, error: loadError } = await supabase
+        .from("vung_kinh_te")
+        .select("id, ten_vung");
+
+      if (loadError) {
+        throw new Error(loadError.message);
+      }
+
+      const existingByName = new Map(
+        (existingRows || []).map((row) => [normalizeVietnamName(row.ten_vung), row]),
+      );
+
+      for (const row of buildDefaultEconomicRegionRows()) {
+        const existingRow = existingByName.get(normalizeVietnamName(row.ten_vung));
+
+        if (existingRow?.id) {
+          const { error: updateError } = await supabase
+            .from("vung_kinh_te")
+            .update(row)
+            .eq("id", existingRow.id);
+
+          if (updateError) {
+            throw new Error(updateError.message);
+          }
+        } else {
+          const { error: insertError } = await supabase
+            .from("vung_kinh_te")
+            .insert(row);
+
+          if (insertError) {
+            throw new Error(insertError.message);
+          }
+        }
+      }
+
+      setMessage("Đã đồng bộ 6 vùng kinh tế mặc định lên Supabase.");
+      await loadRows();
+    } catch (seedError) {
+      const nextMessage = seedError.message || "Không thể đồng bộ vùng kinh tế mặc định.";
+
+      if (
+        nextMessage.includes("column") &&
+        nextMessage.includes("vung_kinh_te")
+      ) {
+        setError(
+          `Schema Supabase của bảng vung_kinh_te còn thiếu cột mới. Cần chạy file supabase/seeds/2026-06-12_vung_kinh_te_ban_do_34_tinh.sql rồi đồng bộ lại. Chi tiết: ${nextMessage}`,
+        );
+      } else {
+        setError(nextMessage);
+      }
+    }
+
+    setSeedingDefaults(false);
   }
 
   function handleTableChange(tableName) {
@@ -511,6 +603,50 @@ function Admin() {
   }
 
   function renderField(field) {
+    if (field.type === "multi-select") {
+      const selectedValues = parseMultiSelectValues(formData[field.name]);
+      const selectedSet = new Set(selectedValues);
+
+      return (
+        <>
+          <div className="admin-checkbox-toolbar">
+            <strong>Đã chọn {selectedValues.length} tỉnh/thành</strong>
+            <div className="admin-checkbox-actions">
+              <button
+                type="button"
+                className="admin-text-button"
+                onClick={() => updateMultiSelectField(field, new Set((field.options || []).map((option) => option.value)))}
+              >
+                Chọn tất cả
+              </button>
+              <button
+                type="button"
+                className="admin-text-button"
+                onClick={() => handleChange(field, "")}
+              >
+                Bỏ chọn
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-checkbox-grid">
+            {(field.options || []).map((option) => (
+              <label key={option.value} className="admin-checkbox-card">
+                <input
+                  type="checkbox"
+                  checked={selectedSet.has(option.value)}
+                  onChange={() => toggleMultiSelectValue(field, option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+
+          {field.helperText ? <small className="admin-field-help">{field.helperText}</small> : null}
+        </>
+      );
+    }
+
     if (field.type === "textarea") {
       return (
         <textarea
@@ -673,8 +809,20 @@ function Admin() {
 
             <section className="admin-table-panel">
               <div className="admin-panel-title">
-                <h2>{selectedTable.label}</h2>
-                <p>Hiển thị tối đa 50 bản ghi mới nhất</p>
+                <div>
+                  <h2>{selectedTable.label}</h2>
+                  <p>Hiển thị tối đa 50 bản ghi mới nhất</p>
+                </div>
+                {isEconomicRegionTable ? (
+                  <button
+                    type="button"
+                    className="admin-secondary-button"
+                    onClick={handleSeedEconomicRegions}
+                    disabled={seedingDefaults}
+                  >
+                    {seedingDefaults ? "Đang đồng bộ..." : "Đồng bộ 6 vùng mặc định"}
+                  </button>
+                ) : null}
               </div>
 
               {message ? <div className="admin-success">{message}</div> : null}
@@ -683,7 +831,11 @@ function Admin() {
               {loading ? (
                 <p className="admin-empty">Đang tải dữ liệu...</p>
               ) : rows.length === 0 ? (
-                <p className="admin-empty">Chưa có dữ liệu trong bảng này.</p>
+                <p className="admin-empty">
+                  {isEconomicRegionTable
+                    ? "Bảng này đang trống. Bấm \"Đồng bộ 6 vùng mặc định\" để đẩy dữ liệu vùng kinh tế thật lên Supabase."
+                    : "Chưa có dữ liệu trong bảng này."}
+                </p>
               ) : (
                 <div className="admin-table-scroll">
                   <table>

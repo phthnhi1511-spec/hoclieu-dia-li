@@ -1,3 +1,5 @@
+import { VIETNAM_34_PROVINCE_OPTIONS } from "./lib/vietnamMap";
+
 const commonStatusFields = [{ name: "da_xuat_ban", label: "Đã xuất bản", type: "boolean" }];
 
 const references = {
@@ -164,27 +166,27 @@ export const adminTables = [
   },
   {
     fields: [
-      { name: "tieu_de", label: "Tiêu đề", required: true },
-      { name: "mo_ta", label: "Mô tả", type: "textarea" },
-      { name: "chu_de_id", label: "Chủ đề", reference: references.chuDe, type: "number" },
-      { name: "duong_dan_anh_ban_do", label: "Đường dẫn ảnh bản đồ" },
-      { name: "duong_dan_file_ban_do", label: "Đường dẫn file bản đồ" },
-      { name: "duong_dan_nhung", label: "Đường dẫn nhúng" },
-      ...commonStatusFields,
-    ],
-    label: "Bản đồ",
-    name: "ban_do",
-  },
-  {
-    fields: [
       { name: "ten_vung", label: "Tên vùng", required: true },
       { name: "duong_dan", label: "Đường dẫn", required: true },
+      {
+        name: "danh_sach_tinh",
+        label: "Tỉnh/thành thuộc vùng",
+        type: "multi-select",
+        helperText:
+          "Tick trực tiếp các tỉnh/thành thuộc vùng. Danh sách này quyết định khi click vào bản đồ thì tỉnh sẽ hiện thông tin của vùng nào.",
+        options: VIETNAM_34_PROVINCE_OPTIONS,
+      },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
-      { name: "the_manh", label: "Thế mạnh", type: "textarea" },
-      { name: "nganh_cong_nghiep_chinh", label: "Ngành công nghiệp chính", type: "textarea" },
-      { name: "nganh_nong_nghiep_chinh", label: "Ngành nông nghiệp chính", type: "textarea" },
-      { name: "thanh_pho_tieu_bieu", label: "Thành phố tiêu biểu" },
-      { name: "duong_dan_anh", label: "Đường dẫn ảnh" },
+      { name: "dien_tich_km2", label: "Diện tích (km²)", type: "number" },
+      { name: "dan_so", label: "Dân số", type: "number" },
+      { name: "mat_do_dan_so", label: "Mật độ dân số", type: "number" },
+      { name: "the_manh_tu_nhien", label: "Thế mạnh kinh tế tự nhiên", type: "textarea" },
+      { name: "the_manh_nhan_luc", label: "Thế mạnh kinh tế nhân lực", type: "textarea" },
+      {
+        name: "thanh_pho_tieu_bieu",
+        label: "Đô thị / trung tâm hành chính lớn",
+        type: "textarea",
+      },
       { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
       ...commonStatusFields,
     ],

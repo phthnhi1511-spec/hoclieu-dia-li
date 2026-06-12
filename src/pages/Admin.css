@@ -168,6 +168,58 @@
   resize: vertical;
 }
 
+.admin-checkbox-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.admin-checkbox-toolbar strong {
+  color: #264132;
+  font-size: 14px;
+}
+
+.admin-checkbox-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-checkbox-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-checkbox-card {
+  align-items: center;
+  background: #f8fbf9;
+  border: 1px solid #dce7df;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.admin-checkbox-card input {
+  margin: 0;
+  width: 18px;
+}
+
+.admin-checkbox-card span {
+  color: #264132;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .admin-field-help {
   color: #607166;
   display: block;
@@ -486,6 +538,15 @@
   .admin-quiz-layout,
   .admin-quiz-meta-grid,
   .admin-quiz-answer-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-checkbox-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-checkbox-grid {
     grid-template-columns: 1fr;
   }
 }
