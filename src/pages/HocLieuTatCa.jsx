@@ -1,17 +1,18 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { buildR2ProxyFileUrl } from "../lib/r2";
 import { getMaterialKind, getTypeName, parseMediaList } from "../lib/materialUtils";
+import { buildR2ProxyFileUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./HocLieuTheoChuDe.css";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 9;
 const SKELETON_CARD_COUNT = 6;
 
-function MaterialListCard({ duongDan, material, types }) {
+function MaterialListCard({ material, topicById, types }) {
   const typeName = getTypeName(material, types);
-  const detailPath = `/hoc-lieu/${duongDan}/${material.id}`;
+  const topic = topicById.get(material.chu_de_id);
+  const detailPath = topic?.duong_dan ? `/hoc-lieu/${topic.duong_dan}/${material.id}` : "/hoc-lieu";
   const imageList = parseMediaList(material.duong_dan_anh_dai_dien);
   const thumbnailUrl = imageList[0] ? buildR2ProxyFileUrl(imageList[0]) : "";
   const materialKind = getMaterialKind(material, types);
@@ -36,6 +37,7 @@ function MaterialListCard({ duongDan, material, types }) {
       <div className="material-list-body">
         <div className="material-meta">
           <span>{typeName}</span>
+          {topic?.ten_chu_de ? <span>{topic.ten_chu_de}</span> : null}
           {material.noi_bat ? <span>Nổi bật</span> : null}
           {material.ten_nguon ? <span>Nguồn: {material.ten_nguon}</span> : null}
         </div>
@@ -62,6 +64,7 @@ function MaterialListCardSkeleton() {
         <div className="material-meta">
           <div className="material-skeleton material-skeleton-chip" />
           <div className="material-skeleton material-skeleton-chip" />
+          <div className="material-skeleton material-skeleton-chip" />
         </div>
 
         <div className="material-skeleton material-skeleton-title" />
@@ -79,6 +82,10 @@ function MaterialListCardSkeleton() {
 function MaterialsControlsSkeleton() {
   return (
     <section className="materials-controls materials-controls-skeleton" aria-hidden="true">
+      <div>
+        <div className="material-skeleton material-skeleton-label" />
+        <div className="material-skeleton material-skeleton-input" />
+      </div>
       <div>
         <div className="material-skeleton material-skeleton-label" />
         <div className="material-skeleton material-skeleton-input" />
@@ -126,12 +133,12 @@ function MaterialsPagination({ currentPage, totalPages, onPageChange }) {
   );
 }
 
-function HocLieuTheoChuDe() {
-  const { duongDan } = useParams();
-  const [topic, setTopic] = useState(null);
+function HocLieuTatCa() {
+  const [topics, setTopics] = useState([]);
   const [types, setTypes] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [selectedTypeId, setSelectedTypeId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -144,56 +151,41 @@ function HocLieuTheoChuDe() {
     async function loadPageData() {
       setLoading(true);
       setError("");
-      setTopic(null);
-      setMaterials([]);
-      setSelectedTypeId("tat-ca");
-      setCurrentPage(1);
 
-      const { data: topicData, error: topicError } = await supabase
-        .from("chu_de")
-        .select("id, ten_chu_de, duong_dan, mo_ta")
-        .eq("duong_dan", duongDan)
-        .maybeSingle();
-
-      if (!isMounted) return;
-
-      if (topicError) {
-        setError(`Lỗi tải chủ đề: ${topicError.message}`);
-        setLoading(false);
-        return;
-      }
-
-      if (!topicData) {
-        setError("Không tìm thấy chủ đề học liệu.");
-        setLoading(false);
-        return;
-      }
-
-      const [{ data: typeData, error: typeError }, { data: materialData, error: materialError }] =
-        await Promise.all([
-          supabase
-            .from("loai_hoc_lieu")
-            .select("id, ten_loai, duong_dan")
-            .eq("dang_hien_thi", true)
-            .order("thu_tu_hien_thi", { ascending: true }),
-          supabase
-            .from("hoc_lieu")
-            .select("*")
-            .eq("chu_de_id", topicData.id)
-            .eq("da_xuat_ban", true)
-            .order("ngay_tao", { ascending: false }),
-        ]);
+      const [
+        { data: topicsData, error: topicsError },
+        { data: typesData, error: typesError },
+        { data: materialsData, error: materialsError },
+      ] = await Promise.all([
+        supabase
+          .from("chu_de")
+          .select("id, ten_chu_de, duong_dan")
+          .eq("dang_hien_thi", true)
+          .order("thu_tu_hien_thi", { ascending: true }),
+        supabase
+          .from("loai_hoc_lieu")
+          .select("id, ten_loai, duong_dan")
+          .eq("dang_hien_thi", true)
+          .order("thu_tu_hien_thi", { ascending: true }),
+        supabase
+          .from("hoc_lieu")
+          .select("*")
+          .eq("da_xuat_ban", true)
+          .order("ngay_tao", { ascending: false }),
+      ]);
 
       if (!isMounted) return;
 
-      if (typeError) {
-        setError(`Lỗi tải loại học liệu: ${typeError.message}`);
-      } else if (materialError) {
-        setError(`Lỗi tải học liệu: ${materialError.message}`);
+      if (topicsError) {
+        setError(`Lỗi tải chủ đề: ${topicsError.message}`);
+      } else if (typesError) {
+        setError(`Lỗi tải loại học liệu: ${typesError.message}`);
+      } else if (materialsError) {
+        setError(`Lỗi tải học liệu: ${materialsError.message}`);
       } else {
-        setTopic(topicData);
-        setTypes(typeData || []);
-        setMaterials(materialData || []);
+        setTopics(topicsData || []);
+        setTypes(typesData || []);
+        setMaterials(materialsData || []);
       }
 
       setLoading(false);
@@ -204,23 +196,32 @@ function HocLieuTheoChuDe() {
     return () => {
       isMounted = false;
     };
-  }, [duongDan]);
+  }, []);
+
+  const topicById = useMemo(
+    () => new Map(topics.map((topic) => [topic.id, topic])),
+    [topics],
+  );
 
   const filteredMaterials = useMemo(() => {
     const keyword = deferredSearchText.trim().toLowerCase();
 
     return materials.filter((material) => {
+      const topicName = topicById.get(material.chu_de_id)?.ten_chu_de?.toLowerCase() || "";
+      const matchesTopic =
+        selectedTopicId === "tat-ca" || material.chu_de_id === Number(selectedTopicId);
       const matchesType =
         selectedTypeId === "tat-ca" || material.loai_hoc_lieu_id === Number(selectedTypeId);
       const matchesSearch =
         keyword === "" ||
         material.tieu_de?.toLowerCase().includes(keyword) ||
         material.mo_ta?.toLowerCase().includes(keyword) ||
+        topicName.includes(keyword) ||
         getTypeName(material, types).toLowerCase().includes(keyword);
 
-      return matchesType && matchesSearch;
+      return matchesTopic && matchesType && matchesSearch;
     });
-  }, [materials, deferredSearchText, selectedTypeId, types]);
+  }, [materials, deferredSearchText, selectedTopicId, selectedTypeId, topicById, types]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
@@ -236,10 +237,10 @@ function HocLieuTheoChuDe() {
       <main className="materials-page">
         <section className="materials-hero">
           <p className="materials-eyebrow">Học liệu số</p>
-          <h1>{topic?.ten_chu_de || "Học liệu theo chủ đề"}</h1>
+          <h1>Toàn bộ học liệu</h1>
           <p>
-            {topic?.mo_ta ||
-              "Xem danh sách học liệu theo chủ đề, chọn đúng tài liệu rồi mở trang chi tiết để đọc, xem hoặc tải."}
+            Xem tất cả học liệu đã xuất bản trên website, tìm nhanh theo chủ đề hoặc loại học liệu,
+            rồi đi vào từng trang chi tiết để đọc, xem hoặc tải về.
           </p>
         </section>
 
@@ -249,7 +250,7 @@ function HocLieuTheoChuDe() {
             <span>/</span>
             <span>Học liệu</span>
             <span>/</span>
-            <strong>{topic?.ten_chu_de || "Đang tải chủ đề"}</strong>
+            <strong>Toàn bộ học liệu</strong>
           </div>
 
           <Link to="/" className="materials-topbar-action">
@@ -266,16 +267,6 @@ function HocLieuTheoChuDe() {
                 <MaterialListCardSkeleton key={index} />
               ))}
             </section>
-
-            <div className="materials-pagination materials-pagination-skeleton" aria-hidden="true">
-              <div className="material-skeleton material-skeleton-button" />
-              <div className="materials-pagination-pages">
-                <div className="material-skeleton material-skeleton-pagination-dot" />
-                <div className="material-skeleton material-skeleton-pagination-dot" />
-                <div className="material-skeleton material-skeleton-pagination-dot" />
-              </div>
-              <div className="material-skeleton material-skeleton-button" />
-            </div>
           </>
         ) : (
           <>
@@ -289,8 +280,26 @@ function HocLieuTheoChuDe() {
                     setSearchText(event.target.value);
                     setCurrentPage(1);
                   }}
-                  placeholder="Nhập tên tài liệu, mô tả hoặc loại học liệu"
+                  placeholder="Nhập tên học liệu, mô tả, chủ đề hoặc loại học liệu"
                 />
+              </label>
+
+              <label>
+                <span>Lọc theo chủ đề</span>
+                <select
+                  value={selectedTopicId}
+                  onChange={(event) => {
+                    setSelectedTopicId(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="tat-ca">Tất cả chủ đề</option>
+                  {topics.map((topic) => (
+                    <option key={topic.id} value={topic.id}>
+                      {topic.ten_chu_de}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>
@@ -316,7 +325,7 @@ function HocLieuTheoChuDe() {
               <section className="materials-status materials-error">{error}</section>
             ) : filteredMaterials.length === 0 ? (
               <section className="materials-status">
-                Chưa có học liệu phù hợp. Bạn có thể thêm học liệu trong trang quản trị.
+                Chưa có học liệu phù hợp với bộ lọc hiện tại.
               </section>
             ) : (
               <>
@@ -324,8 +333,8 @@ function HocLieuTheoChuDe() {
                   {paginatedMaterials.map((material) => (
                     <MaterialListCard
                       key={material.id}
-                      duongDan={duongDan}
                       material={material}
+                      topicById={topicById}
                       types={types}
                     />
                   ))}
@@ -340,13 +349,9 @@ function HocLieuTheoChuDe() {
             )}
           </>
         )}
-
-        <div className="materials-back">
-          <Link to="/">Quay lại trang chủ</Link>
-        </div>
       </main>
     </div>
   );
 }
 
-export default HocLieuTheoChuDe;
+export default HocLieuTatCa;

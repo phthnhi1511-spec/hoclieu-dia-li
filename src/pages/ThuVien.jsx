@@ -81,11 +81,18 @@ function ExamCard({ exam, topicName }) {
   const thumbnailUrl = getExamThumbnailUrl(exam);
   const fileTypeLabel = getExamKindLabel(exam.duong_dan_file);
   const downloadUrl = buildR2ProxyFileUrl(exam.duong_dan_file);
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(thumbnailUrl) && !hasImageError;
 
   return (
     <article className="library-card">
-      {thumbnailUrl ? (
-        <img className="library-card-image" src={thumbnailUrl} alt={exam.tieu_de} />
+      {shouldShowImage ? (
+        <img
+          className="library-card-image"
+          src={thumbnailUrl}
+          alt={exam.tieu_de}
+          onError={() => setHasImageError(true)}
+        />
       ) : (
         <div className="library-card-image library-card-image-placeholder">
           <span>{fileTypeLabel}</span>
@@ -118,11 +125,18 @@ function ExamCard({ exam, topicName }) {
 
 function NewsCard({ news, topicName, onOpen }) {
   const imageUrl = news.duong_dan_anh_dai_dien ? buildR2FileUrl(news.duong_dan_anh_dai_dien) : "";
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(imageUrl) && !hasImageError;
 
   return (
     <article className="library-card">
-      {imageUrl ? (
-        <img className="library-card-image" src={imageUrl} alt={news.tieu_de} />
+      {shouldShowImage ? (
+        <img
+          className="library-card-image"
+          src={imageUrl}
+          alt={news.tieu_de}
+          onError={() => setHasImageError(true)}
+        />
       ) : (
         <div className="library-card-image library-card-image-news">
           <span>Tin tức</span>

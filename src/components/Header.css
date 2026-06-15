@@ -57,6 +57,7 @@
 .nav-dropdown-button {
   background: transparent;
   border: 0;
+  display: inline-flex;
   padding: 12px 0;
 }
 

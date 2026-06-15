@@ -231,7 +231,6 @@ function LuyenTapChiTiet() {
     setPhase("quiz");
     setStartedAt(new Date());
     setActiveQuestionIndex(0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleChooseAnswer(questionId, answerId) {
@@ -322,7 +321,6 @@ function LuyenTapChiTiet() {
         wrongCount: questions.length - correctCount,
       });
       setPhase("result");
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (saveError) {
       if (createdResultId) {
         await supabase.from("chi_tiet_ket_qua_kiem_tra").delete().eq("ket_qua_id", createdResultId);
@@ -342,7 +340,6 @@ function LuyenTapChiTiet() {
     setResultSummary(null);
     setSubmitError("");
     setPhase("quiz");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (

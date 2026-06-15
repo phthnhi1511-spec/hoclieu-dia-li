@@ -628,6 +628,18 @@
   line-height: 1.5;
 }
 
+.admin-cell-clamp {
+  display: -webkit-box;
+  line-height: 1.55;
+  max-height: calc(1.55em * 4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
 .admin-actions {
   white-space: nowrap;
 }

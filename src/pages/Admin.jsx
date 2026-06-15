@@ -56,6 +56,16 @@ function formatCellValue(value) {
   return String(value);
 }
 
+function renderTableCellValue(value) {
+  const displayValue = formatCellValue(value);
+
+  return (
+    <div className="admin-cell-clamp" title={displayValue}>
+      {displayValue}
+    </div>
+  );
+}
+
 function parseMultiSelectValues(value) {
   return parseProvinceList(value);
 }
@@ -857,7 +867,7 @@ function Admin() {
                         <tr key={row.id}>
                           <td>{row.id}</td>
                           {selectedTable.fields.slice(0, 5).map((field) => (
-                            <td key={field.name}>{formatCellValue(row[field.name])}</td>
+                            <td key={field.name}>{renderTableCellValue(row[field.name])}</td>
                           ))}
                           <td className="admin-actions">
                             <button type="button" onClick={() => handleEdit(row)}>

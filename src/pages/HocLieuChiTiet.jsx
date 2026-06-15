@@ -189,6 +189,37 @@ function WorksheetPreview({ linkUrl, imageUrls }) {
 }
 
 function ImageGalleryPreview({ imageUrls, label }) {
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  useEffect(() => {
+    if (activeIndex < 0) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setActiveIndex(-1);
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        setActiveIndex((current) => Math.min(imageUrls.length - 1, current + 1));
+      }
+
+      if (event.key === "ArrowLeft") {
+        setActiveIndex((current) => Math.max(0, current - 1));
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeIndex, imageUrls.length]);
+
   if (imageUrls.length === 0) {
     return (
       <div className="material-detail-note">
@@ -198,11 +229,85 @@ function ImageGalleryPreview({ imageUrls, label }) {
   }
 
   return (
-    <div className="material-detail-gallery">
-      {imageUrls.map((imageUrl, index) => (
-        <img key={`${imageUrl}-${index}`} src={imageUrl} alt={`${label} ${index + 1}`} />
-      ))}
-    </div>
+    <>
+      <div className="material-detail-gallery">
+        {imageUrls.map((imageUrl, index) => (
+          <button
+            key={`${imageUrl}-${index}`}
+            type="button"
+            className="material-detail-gallery-item"
+            onClick={() => setActiveIndex(index)}
+            aria-label={`Mở ảnh ${index + 1} của ${label}`}
+          >
+            <img src={imageUrl} alt={`${label} ${index + 1}`} />
+            <span className="material-detail-gallery-hint">Bấm để xem lớn</span>
+          </button>
+        ))}
+      </div>
+
+      {activeIndex >= 0 ? (
+        <div
+          className="material-detail-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${label} ảnh ${activeIndex + 1}`}
+          onClick={() => setActiveIndex(-1)}
+        >
+          <div
+            className="material-detail-lightbox-dialog"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="material-detail-lightbox-toolbar">
+              <span>
+                {label} {activeIndex + 1}/{imageUrls.length}
+              </span>
+              <button
+                type="button"
+                className="material-detail-lightbox-close"
+                onClick={() => setActiveIndex(-1)}
+                aria-label="Đóng ảnh lớn"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="material-detail-lightbox-stage">
+              {imageUrls.length > 1 ? (
+                <button
+                  type="button"
+                  className="material-detail-lightbox-nav"
+                  onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
+                  disabled={activeIndex === 0}
+                  aria-label="Ảnh trước"
+                >
+                  ‹
+                </button>
+              ) : null}
+
+              <img
+                src={imageUrls[activeIndex]}
+                alt={`${label} ${activeIndex + 1}`}
+                className="material-detail-lightbox-image"
+              />
+
+              {imageUrls.length > 1 ? (
+                <button
+                  type="button"
+                  className="material-detail-lightbox-nav"
+                  onClick={() =>
+                    setActiveIndex((current) => Math.min(imageUrls.length - 1, current + 1))
+                  }
+                  disabled={activeIndex === imageUrls.length - 1}
+                  aria-label="Ảnh sau"
+                >
+                  ›
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 

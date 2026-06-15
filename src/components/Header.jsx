@@ -47,11 +47,13 @@ function Header() {
         <Link to="/">TRANG CHỦ</Link>
 
         <div className="nav-dropdown">
-          <button type="button" className="nav-dropdown-button">
+          <Link to="/hoc-lieu" className="nav-dropdown-button">
             HỌC LIỆU
-          </button>
+          </Link>
 
           <div className="nav-dropdown-menu">
+            <Link to="/hoc-lieu">Tất cả học liệu</Link>
+
             {loading ? (
               <span className="nav-dropdown-empty">Đang tải...</span>
             ) : topics.length === 0 ? (

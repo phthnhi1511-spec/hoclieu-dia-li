@@ -169,6 +169,15 @@
   padding: 24px;
 }
 
+.material-detail-gallery-item {
+  background: transparent;
+  border: 0;
+  cursor: zoom-in;
+  padding: 0;
+  position: relative;
+  text-align: left;
+}
+
 .material-detail-gallery-single {
   grid-template-columns: minmax(0, 1fr);
   width: min(920px, 100%);
@@ -178,6 +187,96 @@
   aspect-ratio: 4 / 3;
   border-radius: 12px;
   object-fit: cover;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+}
+
+.material-detail-gallery-item:hover img {
+  box-shadow: 0 20px 34px rgba(15, 68, 15, 0.16);
+  transform: translateY(-2px);
+}
+
+.material-detail-gallery-hint {
+  background: rgba(15, 68, 15, 0.78);
+  border-radius: 999px;
+  bottom: 14px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  left: 14px;
+  padding: 8px 12px;
+  position: absolute;
+}
+
+.material-detail-lightbox {
+  align-items: center;
+  background: rgba(11, 22, 15, 0.84);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 1300;
+}
+
+.material-detail-lightbox-dialog {
+  background: #0f1712;
+  border-radius: 18px;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+  max-height: calc(100vh - 48px);
+  max-width: min(1440px, 100%);
+  overflow: hidden;
+  width: 100%;
+}
+
+.material-detail-lightbox-toolbar {
+  align-items: center;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.material-detail-lightbox-toolbar span {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.material-detail-lightbox-close,
+.material-detail-lightbox-nav {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.12);
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 30px;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.material-detail-lightbox-nav:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.material-detail-lightbox-stage {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: min(78vh, 920px);
+  padding: 0 18px 18px;
+}
+
+.material-detail-lightbox-image {
+  border-radius: 14px;
+  display: block;
+  max-height: calc(100vh - 150px);
+  max-width: 100%;
+  object-fit: contain;
   width: 100%;
 }
 
@@ -643,5 +742,30 @@
 
   .material-atlat-sheet {
     min-height: 560px;
+  }
+
+  .material-detail-lightbox {
+    padding: 12px;
+  }
+
+  .material-detail-lightbox-dialog {
+    max-height: calc(100vh - 24px);
+  }
+
+  .material-detail-lightbox-stage {
+    gap: 12px;
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 0 12px 12px;
+  }
+
+  .material-detail-lightbox-image {
+    max-height: calc(100vh - 170px);
+  }
+
+  .material-detail-lightbox-nav {
+    font-size: 24px;
+    height: 42px;
+    width: 42px;
   }
 }
