@@ -68,8 +68,8 @@ function Header() {
 
         <Link to="/ban-do">BẢN ĐỒ</Link>
         <Link to="/luyen-tap">LUYỆN TẬP</Link>
-        <span>KHẢO SÁT</span>
-        <span>THƯ VIỆN</span>
+        <Link to="/khao-sat">KHẢO SÁT</Link>
+        <Link to="/thu-vien">THƯ VIỆN</Link>
       </nav>
     </header>
   );

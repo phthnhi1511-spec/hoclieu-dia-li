@@ -10,6 +10,7 @@ import {
   parseProvinceList,
 } from "../lib/vietnamMap";
 import AdminQuizBuilder from "./AdminQuizBuilder";
+import AdminQuizResultsManager from "./AdminQuizResultsManager";
 import "./Admin.css";
 
 const sessionKey = "hoclieu_admin_unlocked";
@@ -114,6 +115,7 @@ function Admin() {
     [selectedTableName],
   );
   const isQuizBuilderMode = selectedTableName === "quiz_builder";
+  const isQuizResultsMode = selectedTableName === "quiz_results_manager";
 
   const [rows, setRows] = useState([]);
   const [formData, setFormData] = useState(() => getInitialForm(selectedTable.fields));
@@ -210,14 +212,14 @@ function Admin() {
   }
 
   useEffect(() => {
-    if (!isUnlocked || isQuizBuilderMode) return;
+    if (!isUnlocked || isQuizBuilderMode || isQuizResultsMode) return;
 
     queueMicrotask(() => {
       loadRows();
       loadReferenceOptions();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTableName, isUnlocked, isQuizBuilderMode]);
+  }, [selectedTableName, isUnlocked, isQuizBuilderMode, isQuizResultsMode]);
 
   function resetTransientState() {
     setReferenceOptions({});
@@ -768,7 +770,7 @@ function Admin() {
             </option>
           ))}
         </select>
-        {!isQuizBuilderMode ? (
+        {!isQuizBuilderMode && !isQuizResultsMode ? (
           <button className="admin-secondary-button" type="button" onClick={loadRows}>
             Tải lại
           </button>
@@ -780,6 +782,8 @@ function Admin() {
       <section className="admin-layout">
         {isQuizBuilderMode ? (
           <AdminQuizBuilder />
+        ) : isQuizResultsMode ? (
+          <AdminQuizResultsManager />
         ) : (
           <>
             <form className="admin-form" onSubmit={handleSubmit}>

@@ -10,7 +10,7 @@ Current stack:
 * Backend service: Supabase
 * Database: Supabase PostgreSQL
 * Auth: Supabase Auth
-* Storage: Supabase Storage
+* File storage: Cloudflare R2
 * UI: Keep the original website theme and layout style
 
 Main modules may include:
@@ -23,6 +23,76 @@ Main modules may include:
 * News and practical resources
 * Contact / feedback
 * Admin management
+
+\---
+
+## Current Database Snapshot
+
+The current project is no longer using a minimal generic schema. When working on code, assume these tables and responsibilities already exist:
+
+* `chu_de`
+
+  * Topic master data such as `ten_chu_de`, `duong_dan`, display order, and publish/display flags.
+
+* `loai_hoc_lieu`
+
+  * Material type master data used by the public materials pages and admin CRUD.
+
+* `hoc_lieu`
+
+  * Stores metadata only, not binary file data.
+  * Common fields may include: title, description, topic id, material type id, file path / object key, preview image path, multiple image paths, external worksheet link, source name, grade, featured flag, and publish flag.
+  * Some material types can use multiple image paths stored as newline-separated values.
+
+* `de_thi`
+
+  * Separate from `hoc_lieu` and used specifically by the library-page exam section and admin CRUD.
+  * Important fields currently used by the app: `tieu_de`, `mo_ta`, `chu_de_id`, `duong_dan_file`, `duong_dan_anh_dai_dien`, `ten_nguon`, `da_xuat_ban`.
+  * Supports image, PDF, or Word exam files uploaded to Cloudflare R2.
+
+* `bai_kiem_tra`
+
+  * Quiz/test master table.
+  * Important fields currently used by the app: `tieu_de`, `mo_ta`, `chu_de_id`, `thoi_gian_lam_bai_phut`, `da_xuat_ban`.
+
+* `cau_hoi_kiem_tra`
+
+  * Child table of `bai_kiem_tra`.
+  * Important fields currently used by the app: `bai_kiem_tra_id`, `noi_dung_cau_hoi`, `duong_dan_anh_cau_hoi`, `giai_thich_dap_an`, `diem`, `thu_tu_hien_thi`.
+
+* `dap_an_kiem_tra`
+
+  * Child table of `cau_hoi_kiem_tra`.
+  * Important fields currently used by the app: `cau_hoi_id`, `noi_dung_dap_an`, `la_dap_an_dung`, `thu_tu_hien_thi`.
+  * The current quiz UI is built for one-choice multiple choice questions with answer options displayed in a simple list.
+
+* `ket_qua_kiem_tra`
+
+  * Stores quiz result summary per learner attempt.
+  * Important fields currently used by the app include learner info, quiz id, total question count, correct count, score, and time spent.
+
+* `chi_tiet_ket_qua_kiem_tra`
+
+  * Stores per-question answer detail for a quiz attempt.
+  * Important fields currently used by the app include `ket_qua_id`, `cau_hoi_id`, `dap_an_da_chon_id`, and `la_dap_an_dung`.
+
+* `khao_sat`
+
+  * Used by the admin survey CRUD and the public survey list page.
+  * Important fields currently used by the app: `tieu_de`, `mo_ta`, `doi_tuong_khao_sat`, `duong_dan_khao_sat`, `dang_mo`.
+  * `duong_dan_khao_sat` stores the external survey URL, usually a Google Form link.
+
+* `vung_kinh_te`
+
+  * Used by the map page and admin CRUD.
+  * The current map implementation expects these newer columns: `ten_vung`, `duong_dan`, `danh_sach_tinh`, `mo_ta`, `dien_tich_km2`, `dan_so`, `mat_do_dan_so`, `the_manh_tu_nhien`, `the_manh_nhan_luc`, `thanh_pho_tieu_bieu`, `thu_tu_hien_thi`, `da_xuat_ban`.
+  * `danh_sach_tinh` is currently stored as newline-separated province names and is used to map provinces on the 34-province Vietnam map to each economic region.
+
+Notes for future work:
+
+* The current quiz schema fits standard multiple-choice questions best.
+* True/false grouped questions, short answer, or numeric calculation questions should not be forced into `dap_an_kiem_tra` without first deciding a proper schema extension.
+* The project already contains SQL seed files under `supabase/seeds/` for quiz data and economic-region map data. Reuse those patterns instead of inventing a new import format.
 
 \---
 
@@ -142,8 +212,9 @@ if (error) {
 ## File Upload / Storage Rules
 
 * Do not store PDF, PPT, image, or video binary data directly in the database.
-* Store files in Supabase Storage.
-* Store only file URLs, paths, titles, descriptions, types, and metadata in PostgreSQL.
+* The current project stores uploaded files in Cloudflare R2, not Supabase Storage.
+* Store only object keys / file paths / preview image paths / external links and metadata in PostgreSQL.
+* Keep the upload flow compatible with the existing Cloudflare R2 setup already used by the admin pages and helper functions.
 * Validate file type before upload when possible.
 * Keep upload logic simple and easy to understand.
 
@@ -155,8 +226,10 @@ if (error) {
 * Keep table names consistent with the current project.
 * Do not change existing database schema without explaining why.
 * Do not remove columns or change column types unless explicitly requested.
-* For learning materials, keep fields such as title, description, type, category, file URL, thumbnail URL, and publish status consistent.
-* For quizzes, keep questions, answers, correct answers, and results clearly separated.
+* For learning materials, keep fields such as title, description, type, topic, file path, preview image path, external worksheet link, and publish status consistent with the existing app.
+* For quizzes, keep `bai_kiem_tra`, `cau_hoi_kiem_tra`, `dap_an_kiem_tra`, `ket_qua_kiem_tra`, and `chi_tiet_ket_qua_kiem_tra` clearly separated.
+* For the economic-region map, preserve the `vung_kinh_te` shape currently expected by the frontend, especially `danh_sach_tinh`, `the_manh_tu_nhien`, and `the_manh_nhan_luc`.
+* If a DB change depends on new SQL seed or migration files, update `AGENTS.md` when that change becomes part of the project baseline.
 
 \---
 

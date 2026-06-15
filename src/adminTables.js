@@ -116,53 +116,48 @@ export const adminTables = [
     name: "hoc_lieu",
   },
   {
+    fields: [
+      { name: "tieu_de", label: "Tiêu đề", required: true },
+      { name: "mo_ta", label: "Mô tả", type: "textarea" },
+      { name: "chu_de_id", label: "Chủ đề", reference: references.chuDe, type: "number" },
+      {
+        name: "duong_dan_file",
+        label: "File đề thi",
+        required: true,
+        upload: {
+          accept: ".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp",
+          functionName: "r2-presign-upload",
+          helperText:
+            "Tải file đề thi lên Cloudflare R2. Hỗ trợ ảnh, PDF và Word để phục vụ mục tải về trong thư viện.",
+          provider: "cloudflare-r2",
+        },
+      },
+      {
+        name: "duong_dan_anh_dai_dien",
+        label: "Ảnh xem trước",
+        upload: {
+          accept: ".png,.jpg,.jpeg,.webp",
+          functionName: "r2-presign-upload",
+          helperText:
+            "Có thể tải ảnh preview riêng cho đề thi. Nếu bỏ trống, hệ thống sẽ dùng chính file ảnh nếu đề thi là ảnh.",
+          provider: "cloudflare-r2",
+        },
+      },
+      { name: "ten_nguon", label: "Tên nguồn" },
+      ...commonStatusFields,
+    ],
+    label: "Đề thi",
+    name: "de_thi",
+  },
+  {
     fields: [],
     label: "Kiểm tra - Câu hỏi - Đáp án",
     name: "quiz_builder",
   },
   {
-    fields: [
-      {
-        name: "bai_kiem_tra_id",
-        label: "Bài kiểm tra",
-        reference: references.baiKiemTra,
-        type: "number",
-      },
-      { name: "ho_ten_hoc_sinh", label: "Họ tên học sinh" },
-      { name: "ten_lop", label: "Tên lớp" },
-      { name: "ten_truong", label: "Tên trường" },
-      { name: "tong_so_cau", label: "Tổng số câu", type: "number" },
-      { name: "so_cau_dung", label: "Số câu đúng", type: "number" },
-      { name: "diem_so", label: "Điểm số", type: "number" },
-    ],
-    label: "Kết quả kiểm tra",
-    name: "ket_qua_kiem_tra",
-  },
-  {
-    fields: [
-      {
-        name: "ket_qua_id",
-        label: "Kết quả kiểm tra",
-        reference: references.ketQuaKiemTra,
-        required: true,
-        type: "number",
-      },
-      {
-        name: "cau_hoi_id",
-        label: "Câu hỏi kiểm tra",
-        reference: references.cauHoiKiemTra,
-        type: "number",
-      },
-      {
-        name: "dap_an_da_chon_id",
-        label: "Đáp án đã chọn",
-        reference: references.dapAnKiemTra,
-        type: "number",
-      },
-      { name: "la_dap_an_dung", label: "Là đáp án đúng", type: "boolean" },
-    ],
-    label: "Chi tiết kết quả kiểm tra",
-    name: "chi_tiet_ket_qua_kiem_tra",
+    fields: [],
+    label: "Kết quả kiểm tra - Chi tiết",
+    name: "quiz_results_manager",
   },
   {
     fields: [
@@ -200,9 +195,19 @@ export const adminTables = [
       { name: "tom_tat", label: "Tóm tắt", type: "textarea" },
       { name: "noi_dung", label: "Nội dung", type: "textarea" },
       { name: "chu_de_id", label: "Chủ đề", reference: references.chuDe, type: "number" },
-      { name: "duong_dan_anh_dai_dien", label: "Đường dẫn ảnh đại diện" },
+      {
+        name: "duong_dan_anh_dai_dien",
+        label: "Ảnh đại diện",
+        upload: {
+          accept: ".png,.jpg,.jpeg,.webp",
+          functionName: "r2-presign-upload",
+          helperText:
+            "Chọn ảnh để tải lên Cloudflare R2, hoặc dán URL ảnh trực tiếp nếu bạn dùng ảnh ngoài.",
+          provider: "cloudflare-r2",
+        },
+      },
       { name: "ten_nguon", label: "Tên nguồn" },
-      { name: "duong_dan_nguon", label: "Đường dẫn nguồn" },
+      { name: "duong_dan_nguon", label: "Đường dẫn nguồn", required: true },
       { name: "ngay_xuat_ban", label: "Ngày xuất bản", type: "datetime-local" },
       ...commonStatusFields,
     ],
@@ -230,6 +235,7 @@ export const adminTables = [
       { name: "tieu_de", label: "Tiêu đề", required: true },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
       { name: "doi_tuong_khao_sat", label: "Đối tượng khảo sát" },
+      { name: "duong_dan_khao_sat", label: "Link khảo sát ngoài", required: true },
       { name: "dang_mo", label: "Đang mở", type: "boolean" },
     ],
     label: "Khảo sát",
