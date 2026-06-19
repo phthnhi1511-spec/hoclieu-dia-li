@@ -9,11 +9,6 @@ const references = {
     labelField: "tieu_de",
     table: "bai_kiem_tra",
   },
-  cauHoiKhaoSat: {
-    entityLabel: "câu hỏi khảo sát",
-    labelField: "noi_dung_cau_hoi",
-    table: "cau_hoi_khao_sat",
-  },
   cauHoiKiemTra: {
     entityLabel: "câu hỏi kiểm tra",
     labelField: "noi_dung_cau_hoi",
@@ -36,17 +31,6 @@ const references = {
     entityLabel: "loại học liệu",
     labelField: "ten_loai",
     table: "loai_hoc_lieu",
-  },
-  luaChonKhaoSat: {
-    entityLabel: "lựa chọn khảo sát",
-    labelField: "noi_dung_lua_chon",
-    table: "lua_chon_khao_sat",
-  },
-  phanHoiKhaoSat: {
-    descriptionField: "ten_lop",
-    entityLabel: "phản hồi khảo sát",
-    labelField: "ho_ten_nguoi_tra_loi",
-    table: "phan_hoi_khao_sat",
   },
 };
 
@@ -218,22 +202,6 @@ export const adminTables = [
   {
     fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
-      { name: "chu_de_id", label: "Chủ đề", reference: references.chuDe, type: "number" },
-      { name: "ten_chi_so", label: "Tên chỉ số", required: true },
-      { name: "ten_dia_phuong", label: "Tên địa phương" },
-      { name: "nam", label: "Năm", type: "number" },
-      { name: "gia_tri", label: "Giá trị", type: "number" },
-      { name: "don_vi", label: "Đơn vị" },
-      { name: "ten_nguon", label: "Tên nguồn" },
-      { name: "duong_dan_nguon", label: "Đường dẫn nguồn" },
-      { name: "ghi_chu", label: "Ghi chú", type: "textarea" },
-    ],
-    label: "Dữ liệu thống kê",
-    name: "du_lieu_thong_ke",
-  },
-  {
-    fields: [
-      { name: "tieu_de", label: "Tiêu đề", required: true },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
       { name: "doi_tuong_khao_sat", label: "Đối tượng khảo sát" },
       { name: "duong_dan_khao_sat", label: "Link khảo sát ngoài", required: true },
@@ -241,87 +209,6 @@ export const adminTables = [
     ],
     label: "Khảo sát",
     name: "khao_sat",
-  },
-  {
-    fields: [
-      {
-        name: "khao_sat_id",
-        label: "Khảo sát",
-        reference: references.khaoSat,
-        required: true,
-        type: "number",
-      },
-      { name: "noi_dung_cau_hoi", label: "Nội dung câu hỏi", required: true, type: "textarea" },
-      { name: "kieu_cau_hoi", label: "Kiểu câu hỏi", required: true },
-      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
-    ],
-    label: "Câu hỏi khảo sát",
-    name: "cau_hoi_khao_sat",
-  },
-  {
-    fields: [
-      {
-        name: "cau_hoi_id",
-        label: "Câu hỏi khảo sát",
-        reference: references.cauHoiKhaoSat,
-        required: true,
-        type: "number",
-      },
-      { name: "noi_dung_lua_chon", label: "Nội dung lựa chọn", required: true },
-      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
-    ],
-    label: "Lựa chọn khảo sát",
-    name: "lua_chon_khao_sat",
-  },
-  {
-    fields: [
-      { name: "khao_sat_id", label: "Khảo sát", reference: references.khaoSat, type: "number" },
-      { name: "ho_ten_nguoi_tra_loi", label: "Họ tên người trả lời" },
-      { name: "ten_lop", label: "Tên lớp" },
-      { name: "ten_truong", label: "Tên trường" },
-      { name: "doi_tuong_tra_loi", label: "Đối tượng trả lời" },
-    ],
-    label: "Phản hồi khảo sát",
-    name: "phan_hoi_khao_sat",
-  },
-  {
-    fields: [
-      {
-        name: "phan_hoi_id",
-        label: "Phản hồi khảo sát",
-        reference: references.phanHoiKhaoSat,
-        required: true,
-        type: "number",
-      },
-      {
-        name: "cau_hoi_id",
-        label: "Câu hỏi khảo sát",
-        reference: references.cauHoiKhaoSat,
-        type: "number",
-      },
-      { name: "noi_dung_tra_loi", label: "Nội dung trả lời", type: "textarea" },
-      {
-        name: "lua_chon_da_chon_id",
-        label: "Lựa chọn đã chọn",
-        reference: references.luaChonKhaoSat,
-        type: "number",
-      },
-    ],
-    label: "Câu trả lời khảo sát",
-    name: "cau_tra_loi_khao_sat",
-  },
-  {
-    fields: [
-      { name: "ho_ten", label: "Họ tên" },
-      { name: "email", label: "Email" },
-      { name: "so_dien_thoai", label: "Số điện thoại" },
-      { name: "ten_truong", label: "Tên trường" },
-      { name: "tieu_de", label: "Tiêu đề" },
-      { name: "noi_dung", label: "Nội dung", required: true, type: "textarea" },
-      { name: "trang_thai", label: "Trạng thái" },
-    ],
-    label: "Góp ý liên hệ",
-    name: "gop_y_lien_he",
   },
   {
     fields: [

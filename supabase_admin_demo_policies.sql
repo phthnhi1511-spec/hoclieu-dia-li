@@ -17,13 +17,7 @@ declare
     'ban_do',
     'vung_kinh_te',
     'tin_tuc_tu_lieu',
-    'du_lieu_thong_ke',
     'khao_sat',
-    'cau_hoi_khao_sat',
-    'lua_chon_khao_sat',
-    'phan_hoi_khao_sat',
-    'cau_tra_loi_khao_sat',
-    'gop_y_lien_he',
     'cau_hinh_website'
   ];
 begin
