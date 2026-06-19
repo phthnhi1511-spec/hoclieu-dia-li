@@ -1,35 +1,49 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { normalizeExternalUrl } from "../lib/libraryUtils";
+import { formatPublishDate, normalizeExternalUrl } from "../lib/libraryUtils";
+import { buildR2FileUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
-const SURVEYS_PER_PAGE = 6;
-const SURVEY_SKELETON_COUNT = 6;
+const NEWS_PER_PAGE = 6;
+const SKELETON_CARD_COUNT = 6;
 
-function SurveyCard({ survey, onOpen }) {
+function NewsCard({ news, topicName, onOpen }) {
+  const imageUrl = news.duong_dan_anh_dai_dien ? buildR2FileUrl(news.duong_dan_anh_dai_dien) : "";
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(imageUrl) && !hasImageError;
+
   return (
     <article className="collection-card">
+      {shouldShowImage ? (
+        <img
+          className="collection-card-media"
+          src={imageUrl}
+          alt={news.tieu_de}
+          onError={() => setHasImageError(true)}
+        />
+      ) : (
+        <div className="collection-card-media collection-card-media-placeholder">Tin</div>
+      )}
+
       <div className="collection-card-body">
         <div className="collection-card-chips">
-          <span className="collection-chip">Khảo sát</span>
-          {survey.doi_tuong_khao_sat ? (
-            <span className="collection-chip collection-chip-secondary">{survey.doi_tuong_khao_sat}</span>
-          ) : null}
-          <span className="collection-chip collection-chip-warm">Đang mở</span>
+          <span className="collection-chip">Tin tức tư liệu</span>
+          {topicName ? <span className="collection-chip collection-chip-secondary">{topicName}</span> : null}
+          <span className="collection-chip collection-chip-warm">{formatPublishDate(news.ngay_xuat_ban)}</span>
         </div>
 
-        <h2>{survey.tieu_de}</h2>
-        <p>{survey.mo_ta || "Khảo sát đang mở để thu thập ý kiến người học và giáo viên qua biểu mẫu bên ngoài."}</p>
+        <h2>{news.tieu_de}</h2>
+        <p>{news.tom_tat || "Bài viết nổi bật liên quan đến nội dung học tập và thực tiễn địa lí kinh tế."}</p>
 
         <div className="collection-card-meta">
-          <span className="collection-chip">{survey.doi_tuong_khao_sat || "Không giới hạn đối tượng"}</span>
+          <span className="collection-chip">{news.ten_nguon || "Nguồn ngoài website"}</span>
         </div>
 
         <div className="collection-card-actions">
-          <button type="button" className="collection-card-action" onClick={() => onOpen(survey)}>
-            Mở biểu mẫu
+          <button type="button" className="collection-card-action" onClick={() => onOpen(news)}>
+            Xem tin bên ngoài
           </button>
         </div>
       </div>
@@ -40,6 +54,9 @@ function SurveyCard({ survey, onOpen }) {
 function CollectionCardSkeleton() {
   return (
     <article className="collection-card collection-card-skeleton" aria-hidden="true">
+      <div className="collection-card-media">
+        <div className="collection-skeleton collection-skeleton-thumb" />
+      </div>
       <div className="collection-card-body">
         <div className="collection-card-chips">
           <div className="collection-skeleton collection-skeleton-chip" />
@@ -77,7 +94,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <nav className="collection-pagination" aria-label="Phân trang khảo sát">
+    <nav className="collection-pagination" aria-label="Phân trang tin tức tư liệu">
       <button type="button" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
         Trang trước
       </button>
@@ -102,10 +119,10 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
   );
 }
 
-function SurveyConfirmModal({ survey, onClose }) {
-  if (!survey) return null;
+function ExitConfirmModal({ news, onClose }) {
+  if (!news) return null;
 
-  const externalUrl = normalizeExternalUrl(survey.duong_dan_khao_sat);
+  const externalUrl = normalizeExternalUrl(news.duong_dan_nguon);
 
   return (
     <div className="collection-modal-backdrop" role="presentation" onClick={onClose}>
@@ -113,18 +130,18 @@ function SurveyConfirmModal({ survey, onClose }) {
         className="collection-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="survey-modal-title"
+        aria-labelledby="news-exit-modal-title"
         onClick={(event) => event.stopPropagation()}
       >
         <p className="collection-modal-eyebrow">Xác nhận rời website</p>
-        <h2 id="survey-modal-title">{survey.tieu_de}</h2>
+        <h2 id="news-exit-modal-title">{news.tieu_de}</h2>
         <p>
-          Bạn sắp chuyển đến một biểu mẫu khảo sát bên ngoài website. Hệ thống sẽ mở liên kết mới để bạn tiếp tục trả lời.
+          Bạn sắp mở một bài viết từ nguồn bên ngoài. Hệ thống sẽ điều hướng sang trang khác để xem đầy đủ nội dung.
         </p>
 
         <div className="collection-modal-source">
-          <strong>Đối tượng:</strong>
-          <span>{survey.doi_tuong_khao_sat || "Chưa giới hạn đối tượng"}</span>
+          <strong>Nguồn:</strong>
+          <span>{news.ten_nguon || externalUrl}</span>
         </div>
 
         <div className="collection-modal-actions">
@@ -132,7 +149,7 @@ function SurveyConfirmModal({ survey, onClose }) {
             Ở lại trang này
           </button>
           <a href={externalUrl} target="_blank" rel="noreferrer" onClick={onClose}>
-            Tiếp tục đến khảo sát
+            Tiếp tục mở bài viết
           </a>
         </div>
       </div>
@@ -140,85 +157,94 @@ function SurveyConfirmModal({ survey, onClose }) {
   );
 }
 
-function KhaoSat() {
-  const [surveys, setSurveys] = useState([]);
+function ThuVienTinTuc() {
+  const [topics, setTopics] = useState([]);
+  const [newsList, setNewsList] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [selectedAudience, setSelectedAudience] = useState("tat-ca");
+  const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeSurvey, setActiveSurvey] = useState(null);
+  const [activeExternalNews, setActiveExternalNews] = useState(null);
   const deferredSearchText = useDeferredValue(searchText);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadSurveyPage() {
+    async function loadPage() {
       setLoading(true);
       setError("");
 
-      const { data, error: loadError } = await supabase
-        .from("khao_sat")
-        .select("id, tieu_de, mo_ta, doi_tuong_khao_sat, duong_dan_khao_sat, dang_mo")
-        .eq("dang_mo", true)
-        .order("id", { ascending: false });
+      const [
+        { data: topicsData, error: topicsError },
+        { data: newsData, error: newsError },
+      ] = await Promise.all([
+        supabase
+          .from("chu_de")
+          .select("id, ten_chu_de")
+          .eq("dang_hien_thi", true)
+          .order("thu_tu_hien_thi", { ascending: true }),
+        supabase
+          .from("tin_tuc_tu_lieu")
+          .select(
+            "id, tieu_de, tom_tat, duong_dan_anh_dai_dien, ten_nguon, duong_dan_nguon, ngay_xuat_ban, chu_de_id",
+          )
+          .eq("da_xuat_ban", true)
+          .order("ngay_xuat_ban", { ascending: false }),
+      ]);
 
       if (!isMounted) return;
 
-      if (loadError) {
-        if (loadError.message?.includes("duong_dan_khao_sat") && loadError.message?.includes("does not exist")) {
-          setError(
-            "Bảng khao_sat còn thiếu cột duong_dan_khao_sat. Cần chạy file supabase/seeds/2026-06-15_khao_sat_link_ngoai.sql rồi tải lại trang.",
-          );
-        } else {
-          setError(`Không thể tải khảo sát: ${loadError.message}`);
-        }
-        setSurveys([]);
+      if (topicsError) {
+        setError(`Không thể tải chủ đề: ${topicsError.message}`);
+        setTopics([]);
+        setNewsList([]);
+      } else if (newsError) {
+        setError(`Không thể tải tin tức: ${newsError.message}`);
+        setTopics(topicsData || []);
+        setNewsList([]);
       } else {
-        setSurveys(data || []);
+        setTopics(topicsData || []);
+        setNewsList(newsData || []);
       }
 
       setLoading(false);
     }
 
-    loadSurveyPage();
+    loadPage();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const audienceOptions = useMemo(() => {
-    return Array.from(
-      new Set(
-        surveys
-          .map((survey) => survey.doi_tuong_khao_sat?.trim())
-          .filter(Boolean),
-      ),
-    ).sort((left, right) => left.localeCompare(right, "vi"));
-  }, [surveys]);
+  const topicNameById = useMemo(
+    () => new Map(topics.map((topic) => [topic.id, topic.ten_chu_de])),
+    [topics],
+  );
 
-  const filteredSurveys = useMemo(() => {
+  const filteredNews = useMemo(() => {
     const keyword = deferredSearchText.trim().toLowerCase();
 
-    return surveys.filter((survey) => {
-      const audience = survey.doi_tuong_khao_sat || "";
-      const matchesAudience = selectedAudience === "tat-ca" || audience === selectedAudience;
+    return newsList.filter((news) => {
+      const topicName = topicNameById.get(news.chu_de_id) || "";
+      const matchesTopic = selectedTopicId === "tat-ca" || news.chu_de_id === Number(selectedTopicId);
       const matchesSearch =
         keyword === "" ||
-        survey.tieu_de?.toLowerCase().includes(keyword) ||
-        survey.mo_ta?.toLowerCase().includes(keyword) ||
-        audience.toLowerCase().includes(keyword);
+        news.tieu_de?.toLowerCase().includes(keyword) ||
+        news.tom_tat?.toLowerCase().includes(keyword) ||
+        topicName.toLowerCase().includes(keyword) ||
+        news.ten_nguon?.toLowerCase().includes(keyword);
 
-      return matchesAudience && matchesSearch;
+      return matchesTopic && matchesSearch;
     });
-  }, [deferredSearchText, selectedAudience, surveys]);
+  }, [deferredSearchText, newsList, selectedTopicId, topicNameById]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredSurveys.length / SURVEYS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(filteredNews.length / NEWS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
-  const paginatedSurveys = filteredSurveys.slice(
-    (currentPageSafe - 1) * SURVEYS_PER_PAGE,
-    currentPageSafe * SURVEYS_PER_PAGE,
+  const paginatedNews = filteredNews.slice(
+    (currentPageSafe - 1) * NEWS_PER_PAGE,
+    currentPageSafe * NEWS_PER_PAGE,
   );
 
   return (
@@ -230,14 +256,14 @@ function KhaoSat() {
           className="collection-hero"
           style={{
             "--collection-hero-image":
-              'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1600")',
+              'url("https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1600")',
           }}
         >
           <div className="collection-hero-content">
-            <p className="collection-eyebrow">Khảo sát</p>
-            <h1>Danh sách khảo sát được trình bày lại theo kiểu dễ đọc và dễ thao tác hơn</h1>
+            <p className="collection-eyebrow">Thư viện - Tin tức tư liệu</p>
+            <h1>Danh sách nguồn tin bên ngoài được tách riêng để dễ đọc và dễ chọn lọc</h1>
             <p>
-              Các biểu mẫu được hiển thị như một danh sách nhiệm vụ rõ ràng, giữ bước xác nhận trước khi chuyển sang nền tảng ngoài website.
+              Các bài báo và liên kết tham khảo được gom thành một trang riêng, giữ bước xác nhận trước khi điều hướng ra ngoài website.
             </p>
           </div>
         </section>
@@ -247,11 +273,13 @@ function KhaoSat() {
             <div className="collection-breadcrumbs">
               <Link to="/">Trang chủ</Link>
               <span>/</span>
-              <strong>Khảo sát</strong>
+              <Link to="/thu-vien">Thư viện</Link>
+              <span>/</span>
+              <strong>Tin tức tư liệu</strong>
             </div>
 
-            <Link to="/" className="collection-topbar-action">
-              Về trang chủ
+            <Link to="/thu-vien" className="collection-topbar-action">
+              Về hub thư viện
             </Link>
           </div>
 
@@ -259,7 +287,7 @@ function KhaoSat() {
             <>
               <ControlsSkeleton />
               <section className="collection-grid">
-                {Array.from({ length: SURVEY_SKELETON_COUNT }, (_, index) => (
+                {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
                   <CollectionCardSkeleton key={index} />
                 ))}
               </section>
@@ -268,7 +296,7 @@ function KhaoSat() {
             <>
               <section className="collection-controls">
                 <label>
-                  <span>Tìm kiếm khảo sát</span>
+                  <span>Tìm kiếm tin tư liệu</span>
                   <input
                     type="search"
                     value={searchText}
@@ -276,23 +304,23 @@ function KhaoSat() {
                       setSearchText(event.target.value);
                       setCurrentPage(1);
                     }}
-                    placeholder="Nhập tiêu đề, mô tả hoặc đối tượng khảo sát"
+                    placeholder="Nhập tiêu đề, tóm tắt, nguồn hoặc chủ đề"
                   />
                 </label>
 
                 <label>
-                  <span>Lọc theo đối tượng</span>
+                  <span>Lọc theo chủ đề</span>
                   <select
-                    value={selectedAudience}
+                    value={selectedTopicId}
                     onChange={(event) => {
-                      setSelectedAudience(event.target.value);
+                      setSelectedTopicId(event.target.value);
                       setCurrentPage(1);
                     }}
                   >
-                    <option value="tat-ca">Tất cả đối tượng</option>
-                    {audienceOptions.map((audience) => (
-                      <option key={audience} value={audience}>
-                        {audience}
+                    <option value="tat-ca">Tất cả chủ đề</option>
+                    {topics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.ten_chu_de}
                       </option>
                     ))}
                   </select>
@@ -301,15 +329,20 @@ function KhaoSat() {
 
               {error ? (
                 <section className="collection-status collection-status-error">{error}</section>
-              ) : filteredSurveys.length === 0 ? (
+              ) : filteredNews.length === 0 ? (
                 <section className="collection-empty">
-                  Chưa có khảo sát phù hợp. Admin có thể thêm khảo sát mới và bật trạng thái mở trong trang quản trị.
+                  Chưa có tin tư liệu phù hợp. Admin có thể thêm và xuất bản trong bảng <strong>tin_tuc_tu_lieu</strong>.
                 </section>
               ) : (
                 <>
                   <section className="collection-grid">
-                    {paginatedSurveys.map((survey) => (
-                      <SurveyCard key={survey.id} survey={survey} onOpen={setActiveSurvey} />
+                    {paginatedNews.map((news) => (
+                      <NewsCard
+                        key={news.id}
+                        news={news}
+                        topicName={topicNameById.get(news.chu_de_id) || ""}
+                        onOpen={setActiveExternalNews}
+                      />
                     ))}
                   </section>
 
@@ -321,9 +354,9 @@ function KhaoSat() {
         </section>
       </main>
 
-      <SurveyConfirmModal survey={activeSurvey} onClose={() => setActiveSurvey(null)} />
+      <ExitConfirmModal news={activeExternalNews} onClose={() => setActiveExternalNews(null)} />
     </div>
   );
 }
 
-export default KhaoSat;
+export default ThuVienTinTuc;

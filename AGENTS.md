@@ -88,11 +88,22 @@ The current project is no longer using a minimal generic schema. When working on
   * The current map implementation expects these newer columns: `ten_vung`, `duong_dan`, `danh_sach_tinh`, `mo_ta`, `dien_tich_km2`, `dan_so`, `mat_do_dan_so`, `the_manh_tu_nhien`, `the_manh_nhan_luc`, `thanh_pho_tieu_bieu`, `thu_tu_hien_thi`, `da_xuat_ban`.
   * `danh_sach_tinh` is currently stored as newline-separated province names and is used to map provinces on the 34-province Vietnam map to each economic region.
 
+* `cau_hinh_website`
+
+  * Used for singleton website configuration values.
+  * The homepage currently reads hero text, hero background image, section headings, CTA labels/links, and footer contact text from this table via `khoa_cau_hinh` and `gia_tri_cau_hinh`.
+
+* `trang_chu_muc`
+
+  * Used for repeatable homepage content blocks and footer link groups.
+  * Important fields currently used by the app: `khu_vuc`, `ma_muc`, `tieu_de`, `mo_ta`, `bieu_tuong`, `duong_dan_anh`, `nhan_hanh_dong`, `duong_dan`, `thu_tu_hien_thi`, `da_hien_thi`.
+  * `khu_vuc` is used to group records into homepage sections such as feature cards, capability cards, featured materials, guide steps, and footer links.
+
 Notes for future work:
 
 * The current quiz schema fits standard multiple-choice questions best.
 * True/false grouped questions, short answer, or numeric calculation questions should not be forced into `dap_an_kiem_tra` without first deciding a proper schema extension.
-* The project already contains SQL seed files under `supabase/seeds/` for quiz data and economic-region map data. Reuse those patterns instead of inventing a new import format.
+* The project already contains SQL seed files under `supabase/seeds/` for quiz data, economic-region map data, and homepage content. Reuse those patterns instead of inventing a new import format.
 
 \---
 

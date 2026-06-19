@@ -144,11 +144,18 @@ function Admin() {
     setError("");
     setMessage("");
 
-    const { data, error: loadError } = await supabase
-      .from(selectedTable.name)
-      .select("*")
-      .order("id", { ascending: false })
-      .limit(50);
+    let query = supabase.from(selectedTable.name).select("*");
+
+    if (selectedTable.name === "trang_chu_muc") {
+      query = query
+        .order("khu_vuc", { ascending: true })
+        .order("thu_tu_hien_thi", { ascending: true })
+        .order("id", { ascending: true });
+    } else {
+      query = query.order("id", { ascending: false });
+    }
+
+    const { data, error: loadError } = await query.limit(50);
 
     if (loadError) {
       setError(loadError.message);
@@ -667,6 +674,23 @@ function Admin() {
           required={field.required}
           rows={4}
         />
+      );
+    }
+
+    if (field.type === "select" && field.options) {
+      return (
+        <select
+          value={formData[field.name] ?? ""}
+          onChange={(event) => handleChange(field, event.target.value)}
+          required={field.required}
+        >
+          <option value="">Chọn {field.label.toLowerCase()}</option>
+          {field.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       );
     }
 

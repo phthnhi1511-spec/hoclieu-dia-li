@@ -12,6 +12,8 @@ import LuyenTap from "./pages/LuyenTap";
 import LuyenTapChiTiet from "./pages/LuyenTapChiTiet";
 import NongNghiep from "./pages/NongNghiep";
 import ThuVien from "./pages/ThuVien";
+import ThuVienDeThi from "./pages/ThuVienDeThi";
+import ThuVienTinTuc from "./pages/ThuVienTinTuc";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
         <Route path="/luyen-tap" element={<LuyenTap />} />
         <Route path="/luyen-tap/:quizId" element={<LuyenTapChiTiet />} />
         <Route path="/thu-vien" element={<ThuVien />} />
+        <Route path="/thu-vien/de-thi" element={<ThuVienDeThi />} />
+        <Route path="/thu-vien/tin-tuc" element={<ThuVienTinTuc />} />
         <Route path="/hoc-lieu" element={<HocLieuTatCa />} />
         <Route path="/hoc-lieu/:duongDan" element={<HocLieuTheoChuDe />} />
         <Route path="/hoc-lieu/:duongDan/:materialId" element={<HocLieuChiTiet />} />

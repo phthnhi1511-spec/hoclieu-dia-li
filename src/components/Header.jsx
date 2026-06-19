@@ -71,7 +71,18 @@ function Header() {
         <Link to="/ban-do">BẢN ĐỒ</Link>
         <Link to="/luyen-tap">LUYỆN TẬP</Link>
         <Link to="/khao-sat">KHẢO SÁT</Link>
-        <Link to="/thu-vien">THƯ VIỆN</Link>
+
+        <div className="nav-dropdown">
+          <Link to="/thu-vien" className="nav-dropdown-button">
+            THƯ VIỆN
+          </Link>
+
+          <div className="nav-dropdown-menu">
+            <Link to="/thu-vien">Tổng quan thư viện</Link>
+            <Link to="/thu-vien/de-thi">Đề thi</Link>
+            <Link to="/thu-vien/tin-tuc">Tin tức tư liệu</Link>
+          </div>
+        </div>
       </nav>
     </header>
   );

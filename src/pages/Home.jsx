@@ -1,272 +1,348 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import {
+  buildHomeConfigMap,
+  getHomeImageUrl,
+  getHomeSectionItems,
+  getHomeTitleLines,
+  getResolvedHomeConfig,
+  groupHomeItems,
+  isExternalLink,
+} from "../lib/homePageContent";
+import { supabase } from "../lib/supabaseClient";
 import "./Home.css";
 
-const featureItems = [
-  {
-    title: "Học mọi lúc, mọi nơi",
-    description: "Truy cập kho học liệu địa lí trên nhiều thiết bị, phù hợp cho cả học sinh và giáo viên.",
-  },
-  {
-    title: "Nội dung đa dạng",
-    description: "Tổng hợp bài giảng, bản đồ, đề thi, quiz, infographic và nhiều tư liệu trực quan.",
-  },
-  {
-    title: "Bám sát chương trình",
-    description: "Nội dung được tổ chức theo định hướng học tập và luyện tập của môn Địa lí 9.",
-  },
-  {
-    title: "Hỗ trợ tự học",
-    description: "Tạo trải nghiệm học tập rõ ràng, dễ tìm kiếm và dễ quay lại ôn tập theo chủ đề.",
-  },
-];
+const FEATURE_CARD_COUNT = 4;
+const CAPABILITY_CARD_COUNT = 3;
+const FEATURED_CARD_COUNT = 6;
 
-const introCards = [
-  {
-    title: "Nhận thức khoa học địa lí",
-    description: "Hiểu được đặc điểm, vai trò và sự phân bố của các ngành kinh tế Việt Nam.",
-  },
-  {
-    title: "Tìm hiểu địa lí bằng trực quan",
-    description: "Khai thác bản đồ, Atlat, số liệu, hình ảnh và học liệu số theo cách dễ tiếp cận hơn.",
-  },
-  {
-    title: "Vận dụng kiến thức",
-    description: "Kết nối kiến thức với thực tiễn học tập, luyện tập và kiểm tra đánh giá hằng ngày.",
-  },
-];
+function HomeLink({ children, className, to }) {
+  if (!to) {
+    return <span className={`${className} home-link-disabled`}>{children}</span>;
+  }
 
-const highlightedMaterials = [
-  {
-    badge: "Học liệu",
-    title: "Kho học liệu số",
-    description: "Tập hợp PDF, video, bản trình chiếu, infographic và nhiều tư liệu trực quan khác.",
-    image:
-      "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80",
-    to: "/hoc-lieu",
-    action: "Xem học liệu",
-  },
-  {
-    badge: "Bản đồ",
-    title: "Bản đồ vùng kinh tế",
-    description: "Khám phá các vùng kinh tế bằng bản đồ tương tác và thông tin do admin quản lý.",
-    image:
-      "https://images.unsplash.com/photo-1526778548025-fa2f459cd5ce?auto=format&fit=crop&w=900&q=80",
-    to: "/ban-do",
-    action: "Mở bản đồ",
-  },
-  {
-    badge: "Luyện tập",
-    title: "Bài kiểm tra trắc nghiệm",
-    description: "Làm bài, lưu kết quả, xem đáp án và giải thích ngay sau khi hoàn thành.",
-    image:
-      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80",
-    to: "/luyen-tap",
-    action: "Làm bài ngay",
-  },
-  {
-    badge: "Khảo sát",
-    title: "Khảo sát học tập",
-    description: "Tổng hợp các biểu mẫu khảo sát để lấy ý kiến và đánh giá trải nghiệm học tập.",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
-    to: "/khao-sat",
-    action: "Xem khảo sát",
-  },
-  {
-    badge: "Thư viện",
-    title: "Đề thi và tư liệu",
-    description: "Lưu trữ đề thi, tài liệu tham khảo và các nguồn hỗ trợ ôn tập riêng cho học sinh.",
-    image:
-      "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80",
-    to: "/thu-vien",
-    action: "Mở thư viện",
-  },
-  {
-    badge: "Tổng hợp",
-    title: "Không gian học tập tập trung",
-    description: "Gom học liệu, bản đồ, quiz và đề thi vào một luồng sử dụng đơn giản, dễ theo dõi.",
-    image:
-      "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=900&q=80",
-    to: "/hoc-lieu",
-    action: "Khám phá thêm",
-  },
-];
+  if (isExternalLink(to)) {
+    const isMailOrPhoneLink = /^(mailto:|tel:)/i.test(to);
 
-const footerLinks = [
-  { label: "Trang chủ", to: "/" },
-  { label: "Học liệu", to: "/hoc-lieu" },
-  { label: "Bản đồ", to: "/ban-do" },
-  { label: "Luyện tập", to: "/luyen-tap" },
-  { label: "Khảo sát", to: "/khao-sat" },
-];
+    return (
+      <a
+        className={className}
+        href={to}
+        target={isMailOrPhoneLink ? undefined : "_blank"}
+        rel={isMailOrPhoneLink ? undefined : "noreferrer"}
+      >
+        {children}
+      </a>
+    );
+  }
 
-function HomeMaterialCard({ item }) {
+  return (
+    <Link className={className} to={to}>
+      {children}
+    </Link>
+  );
+}
+
+function SectionHeading({ description, title }) {
+  return (
+    <header className="home-section-heading">
+      <h2>{title}</h2>
+      <span className="home-section-divider" aria-hidden="true" />
+      {description ? <p>{description}</p> : null}
+    </header>
+  );
+}
+
+function FeatureCard({ item }) {
+  return (
+    <article className="home-feature-card">
+      <span className="home-feature-icon">{item.bieu_tuong || "01"}</span>
+      <div>
+        <h3>{item.tieu_de}</h3>
+        <p>{item.mo_ta || "Nội dung đang được cập nhật."}</p>
+      </div>
+    </article>
+  );
+}
+
+function CapabilityCard({ item }) {
+  return (
+    <article className="home-capability-card">
+      <span className="home-capability-icon">{item.bieu_tuong || "01"}</span>
+      <h3>{item.tieu_de}</h3>
+      <p>{item.mo_ta || "Nội dung đang được cập nhật."}</p>
+    </article>
+  );
+}
+
+function MaterialCard({ item }) {
   const [hasImageError, setHasImageError] = useState(false);
-  const shouldShowImage = Boolean(item.image) && !hasImageError;
+  const imageUrl = !hasImageError ? getHomeImageUrl(item.duong_dan_anh) : "";
+  const shouldShowImage = Boolean(imageUrl);
 
   return (
     <article className="home-material-card">
-      <div className="home-material-image-wrap">
+      <div className="home-material-thumb">
         {shouldShowImage ? (
           <img
-            src={item.image}
-            alt={item.title}
+            src={imageUrl}
+            alt={item.tieu_de}
             className="home-material-image"
             onError={() => setHasImageError(true)}
           />
         ) : (
-          <div className="home-material-image-placeholder">
-            <span>{item.badge}</span>
+          <div className="home-material-placeholder">
+            <span>{item.bieu_tuong || "Học liệu"}</span>
           </div>
         )}
       </div>
 
-      <div className="home-material-body">
-        <span className="home-material-badge">{item.badge}</span>
-        <h3>{item.title}</h3>
-        <p>{item.description}</p>
-        <Link to={item.to} className="home-material-link">
-          {item.action}
-        </Link>
+      <div className="home-material-content">
+        {item.bieu_tuong ? <span className="home-material-badge">{item.bieu_tuong}</span> : null}
+        <h3>{item.tieu_de}</h3>
+        <p>{item.mo_ta || "Nội dung đang được cập nhật."}</p>
+        <HomeLink to={item.duong_dan} className="home-material-link">
+          {item.nhan_hanh_dong || "Xem ngay"}
+        </HomeLink>
+      </div>
+    </article>
+  );
+}
+
+function FeatureSkeleton() {
+  return (
+    <article className="home-feature-card home-card-skeleton" aria-hidden="true">
+      <div className="home-skeleton home-skeleton-icon" />
+      <div className="home-skeleton-block">
+        <div className="home-skeleton home-skeleton-title" />
+        <div className="home-skeleton home-skeleton-text home-skeleton-text-wide" />
+        <div className="home-skeleton home-skeleton-text" />
+      </div>
+    </article>
+  );
+}
+
+function CapabilitySkeleton() {
+  return (
+    <article className="home-capability-card home-card-skeleton" aria-hidden="true">
+      <div className="home-skeleton home-skeleton-capability-icon" />
+      <div className="home-skeleton home-skeleton-title" />
+      <div className="home-skeleton home-skeleton-text home-skeleton-text-wide" />
+      <div className="home-skeleton home-skeleton-text" />
+    </article>
+  );
+}
+
+function MaterialSkeleton() {
+  return (
+    <article className="home-material-card home-card-skeleton" aria-hidden="true">
+      <div className="home-material-thumb">
+        <div className="home-skeleton home-skeleton-thumb" />
+      </div>
+      <div className="home-material-content">
+        <div className="home-skeleton home-skeleton-chip" />
+        <div className="home-skeleton home-skeleton-title" />
+        <div className="home-skeleton home-skeleton-text home-skeleton-text-wide" />
+        <div className="home-skeleton home-skeleton-link" />
       </div>
     </article>
   );
 }
 
 function Home() {
+  const [configRows, setConfigRows] = useState([]);
+  const [homeRows, setHomeRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHomePage() {
+      setLoading(true);
+      setError("");
+
+      const [
+        { data: loadedConfigRows, error: configError },
+        { data: loadedHomeRows, error: homeRowsError },
+      ] = await Promise.all([
+        supabase.from("cau_hinh_website").select("khoa_cau_hinh, gia_tri_cau_hinh"),
+        supabase
+          .from("trang_chu_muc")
+          .select("*")
+          .eq("da_hien_thi", true)
+          .order("khu_vuc", { ascending: true })
+          .order("thu_tu_hien_thi", { ascending: true })
+          .order("id", { ascending: true }),
+      ]);
+
+      if (!isMounted) return;
+
+      if (configError) {
+        setError(
+          `Lỗi tải cấu hình homepage: ${configError.message}. Cần chạy file supabase/seeds/2026-06-19_trang_chu_noi_dung.sql rồi tải lại trang.`,
+        );
+        setConfigRows([]);
+        setHomeRows([]);
+      } else if (homeRowsError) {
+        setError(
+          `Lỗi tải nội dung homepage: ${homeRowsError.message}. Cần chạy file supabase/seeds/2026-06-19_trang_chu_noi_dung.sql rồi tải lại trang.`,
+        );
+        setConfigRows(loadedConfigRows || []);
+        setHomeRows([]);
+      } else {
+        setConfigRows(loadedConfigRows || []);
+        setHomeRows(loadedHomeRows || []);
+      }
+
+      setLoading(false);
+    }
+
+    loadHomePage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const config = useMemo(
+    () => getResolvedHomeConfig(buildHomeConfigMap(configRows)),
+    [configRows],
+  );
+
+  const groupedItems = useMemo(() => groupHomeItems(homeRows), [homeRows]);
+
+  const featureItems = getHomeSectionItems(groupedItems, "diem_noi_bat");
+  const capabilityItems = getHomeSectionItems(groupedItems, "nang_luc_dia_li");
+  const featuredItems = getHomeSectionItems(groupedItems, "hoc_lieu_noi_bat");
+  const footerQuickLinks = getHomeSectionItems(groupedItems, "footer_lien_ket_nhanh");
+  const footerSupportLinks = getHomeSectionItems(groupedItems, "footer_ho_tro");
+  const heroTitleLines = getHomeTitleLines(config.hero_title);
+  const heroBackgroundImage = getHomeImageUrl(config.hero_image);
+
   return (
     <div className="home-page">
       <Header />
 
       <main className="home-main">
-        <section className="home-hero">
-          <div className="home-hero-content">
-            <p className="home-hero-eyebrow">HỌC LIỆU SỐ ĐỊA LÍ 9</p>
-            <h1>
-              Học liệu số
-              <br />
-              Địa lí Kinh tế Việt Nam
-            </h1>
-            <p className="home-hero-description">
-              Khám phá, tìm hiểu và vận dụng kiến thức địa lí bằng hệ thống học liệu trực quan, dễ
-              dùng và bám sát chương trình học.
-            </p>
+        <section
+          className="home-hero"
+          style={{
+            backgroundImage: `linear-gradient(90deg, rgba(5, 44, 19, 0.76) 0%, rgba(5, 44, 19, 0.36) 42%, rgba(5, 44, 19, 0.2) 100%), url("${heroBackgroundImage}")`,
+          }}
+        >
+          <div className="home-hero-inner">
+            <div className="home-hero-content">
+              <h1>
+                {heroTitleLines.map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
+              </h1>
+              <p className="home-hero-description">{config.hero_description}</p>
 
-            <div className="home-hero-actions">
-              <Link to="/hoc-lieu" className="home-button home-button-primary">
-                Bắt đầu học tập
-              </Link>
-              <Link to="/luyen-tap" className="home-button home-button-secondary">
-                Xem luyện tập
-              </Link>
+              <div className="home-hero-actions">
+                <HomeLink to={config.hero_primary_link} className="home-button home-button-primary">
+                  {config.hero_primary_label}
+                </HomeLink>
+                <HomeLink to={config.hero_secondary_link} className="home-button home-button-secondary">
+                  {config.hero_secondary_label}
+                </HomeLink>
+              </div>
             </div>
           </div>
+        </section>
 
+        <section className="home-feature-strip-wrap">
           <div className="home-feature-strip">
-            {featureItems.map((item) => (
-              <article key={item.title} className="home-feature-card">
-                <span className="home-feature-icon" aria-hidden="true">
-                  +
-                </span>
-                <div>
-                  <h2>{item.title}</h2>
-                  <p>{item.description}</p>
-                </div>
-              </article>
-            ))}
+            {loading
+              ? Array.from({ length: FEATURE_CARD_COUNT }, (_, index) => <FeatureSkeleton key={index} />)
+              : featureItems.map((item) => <FeatureCard key={item.id} item={item} />)}
+          </div>
+        </section>
+
+        <section className="home-section home-intro-section">
+          <SectionHeading
+            title="Giới thiệu website"
+            description="Website Học liệu số Địa lí Kinh tế Việt Nam được xây dựng nhằm hỗ trợ học sinh học tập, khám phá kiến thức và phát triển năng lực địa lí thông qua hệ thống bản đồ, video, trò chơi học tập, biểu đồ và nhiều học liệu trực quan khác."
+          />
+
+          <div className="home-capability-grid">
+            {loading
+              ? Array.from({ length: CAPABILITY_CARD_COUNT }, (_, index) => <CapabilitySkeleton key={index} />)
+              : capabilityItems.map((item) => <CapabilityCard key={item.id} item={item} />)}
           </div>
         </section>
 
         <section className="home-section">
-          <div className="home-section-heading">
-            <p className="home-section-kicker">Giới thiệu</p>
-            <h2>Giới thiệu website</h2>
-            <p>
-              Website học liệu số Địa lí Kinh tế Việt Nam được xây dựng để hỗ trợ học sinh và giáo
-              viên khai thác học liệu trực quan, bản đồ, bài luyện tập và các nguồn tư liệu học tập
-              trong cùng một không gian thống nhất.
-            </p>
-          </div>
-
-          <div className="home-intro-grid">
-            {introCards.map((item, index) => (
-              <article key={item.title} className="home-intro-card">
-                <span className="home-intro-badge">{String(index + 1).padStart(2, "0")}</span>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="home-section home-highlight-section">
-          <div className="home-section-heading">
-            <p className="home-section-kicker">Nổi bật</p>
-            <h2>Học liệu nổi bật</h2>
-            <p>
-              Từ trang chủ, người dùng có thể đi vào các khu chức năng chính hoặc mở toàn bộ học
-              liệu để lọc tiếp theo chủ đề và loại nội dung.
-            </p>
-          </div>
+          <SectionHeading title="Học liệu nổi bật" />
 
           <div className="home-material-grid">
-            {highlightedMaterials.map((item) => (
-              <HomeMaterialCard key={item.title} item={item} />
-            ))}
+            {loading
+              ? Array.from({ length: FEATURED_CARD_COUNT }, (_, index) => <MaterialSkeleton key={index} />)
+              : featuredItems.map((item) => <MaterialCard key={item.id} item={item} />)}
           </div>
 
           <div className="home-material-cta">
-            <Link to="/hoc-lieu" className="home-button home-button-primary">
-              Xem toàn bộ học liệu
-            </Link>
+            <HomeLink to={config.featured_cta_link} className="home-button home-button-primary">
+              {config.featured_cta_label}
+            </HomeLink>
           </div>
         </section>
+
+        {error ? (
+          <div className="home-page-message home-page-message-error" role="alert">
+            {error}
+          </div>
+        ) : null}
       </main>
 
       <footer className="home-footer">
         <div className="home-footer-grid">
           <div className="home-footer-brand">
-            <p className="home-footer-kicker">Học liệu địa lí kinh tế Việt Nam</p>
-            <h2>Không gian học tập trực quan cho Địa lí 9</h2>
-            <p>
-              Hệ thống hỗ trợ tìm học liệu, khai thác bản đồ, làm bài luyện tập và tra cứu tài liệu
-              theo một giao diện thống nhất.
-            </p>
+            <h2>{config.footer_brand_title}</h2>
+            <p>{config.footer_brand_description}</p>
           </div>
 
           <div>
-            <h3>Liên kết nhanh</h3>
+            <h3>{config.footer_links_title}</h3>
             <ul className="home-footer-links">
-              {footerLinks.map((item) => (
-                <li key={item.label}>
-                  <Link to={item.to}>{item.label}</Link>
+              {footerQuickLinks.map((item) => (
+                <li key={item.id}>
+                  <HomeLink to={item.duong_dan} className="home-footer-link">
+                    {item.tieu_de}
+                  </HomeLink>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h3>Hỗ trợ</h3>
+            <h3>{config.footer_support_title}</h3>
             <ul className="home-footer-links">
-              <li>Tìm kiếm học liệu theo nhu cầu học tập</li>
-              <li>Khai thác bản đồ tương tác theo vùng kinh tế</li>
-              <li>Làm bài và xem lại kết quả kiểm tra</li>
+              {footerSupportLinks.map((item) => (
+                <li key={item.id}>
+                  <HomeLink to={item.duong_dan} className="home-footer-link">
+                    {item.tieu_de}
+                  </HomeLink>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h3>Liên hệ</h3>
-            <ul className="home-footer-links">
-              <li>Email: phthnhi1511@gmail.com</li>
-              <li>Điện thoại: 0774523201</li>
-              <li>Đại học Sư phạm - Đại học Đà Nẵng</li>
+            <h3>{config.footer_contact_title}</h3>
+            <ul className="home-footer-contact">
+              {config.footer_contact_name ? <li>{config.footer_contact_name}</li> : null}
+              {config.footer_contact_email ? (
+                <li>
+                  <a href={`mailto:${config.footer_contact_email}`}>{config.footer_contact_email}</a>
+                </li>
+              ) : null}
+              {config.footer_contact_school ? <li>{config.footer_contact_school}</li> : null}
             </ul>
           </div>
         </div>
-
-        <p className="home-footer-copy">© 2026 Học liệu Địa lí Kinh tế Việt Nam. All rights reserved.</p>
       </footer>
     </div>
   );

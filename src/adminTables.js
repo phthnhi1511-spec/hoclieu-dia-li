@@ -1,4 +1,5 @@
 import { VIETNAM_34_PROVINCE_OPTIONS } from "./lib/vietnamMap";
+import { HOME_CONFIG_KEY_OPTIONS, HOME_SECTION_OPTIONS } from "./lib/homePageContent";
 
 const commonStatusFields = [{ name: "da_xuat_ban", label: "Đã xuất bản", type: "boolean" }];
 
@@ -324,10 +325,48 @@ export const adminTables = [
   },
   {
     fields: [
-      { name: "khoa_cau_hinh", label: "Khóa cấu hình", required: true },
+      {
+        name: "khoa_cau_hinh",
+        label: "Khóa cấu hình",
+        options: HOME_CONFIG_KEY_OPTIONS,
+        required: true,
+        type: "select",
+      },
       { name: "gia_tri_cau_hinh", label: "Giá trị cấu hình", type: "textarea" },
     ],
     label: "Cấu hình website",
     name: "cau_hinh_website",
+  },
+  {
+    fields: [
+      {
+        name: "khu_vuc",
+        label: "Khu vực hiển thị",
+        options: HOME_SECTION_OPTIONS,
+        required: true,
+        type: "select",
+      },
+      { name: "ma_muc", label: "Mã mục duy nhất", required: true },
+      { name: "tieu_de", label: "Tiêu đề", required: true },
+      { name: "mo_ta", label: "Mô tả", type: "textarea" },
+      { name: "bieu_tuong", label: "Biểu tượng / nhãn ngắn" },
+      {
+        name: "duong_dan_anh",
+        label: "Ảnh hiển thị",
+        upload: {
+          accept: ".png,.jpg,.jpeg,.webp",
+          functionName: "r2-presign-upload",
+          helperText:
+            "Tải ảnh minh họa cho card trên trang chủ. Có thể để trống nếu mục này chỉ cần biểu tượng hoặc văn bản.",
+          provider: "cloudflare-r2",
+        },
+      },
+      { name: "nhan_hanh_dong", label: "Nhãn nút / liên kết" },
+      { name: "duong_dan", label: "Đường dẫn nội bộ hoặc URL ngoài" },
+      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
+      { name: "da_hien_thi", label: "Đang hiển thị", defaultValue: true, type: "boolean" },
+    ],
+    label: "Mục nội dung trang chủ",
+    name: "trang_chu_muc",
   },
 ];

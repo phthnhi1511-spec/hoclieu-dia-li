@@ -1,34 +1,52 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import { getExamKindLabel, getExamThumbnailUrl } from "../lib/libraryUtils";
+import { buildR2ProxyFileUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
-const ITEMS_PER_PAGE = 6;
-const QUIZ_SKELETON_COUNT = 6;
+const EXAMS_PER_PAGE = 6;
+const SKELETON_CARD_COUNT = 6;
 
-function QuizCard({ quiz }) {
+function ExamCard({ exam, topicName }) {
+  const thumbnailUrl = getExamThumbnailUrl(exam);
+  const fileTypeLabel = getExamKindLabel(exam.duong_dan_file);
+  const downloadUrl = buildR2ProxyFileUrl(exam.duong_dan_file);
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(thumbnailUrl) && !hasImageError;
+
   return (
     <article className="collection-card">
+      {shouldShowImage ? (
+        <img
+          className="collection-card-media"
+          src={thumbnailUrl}
+          alt={exam.tieu_de}
+          onError={() => setHasImageError(true)}
+        />
+      ) : (
+        <div className="collection-card-media collection-card-media-placeholder">{fileTypeLabel}</div>
+      )}
+
       <div className="collection-card-body">
         <div className="collection-card-chips">
-          <span className="collection-chip">Trắc nghiệm</span>
-          <span className="collection-chip collection-chip-secondary">{quiz.topicName}</span>
-          <span className="collection-chip collection-chip-warm">{quiz.thoi_gian_lam_bai_phut || 0} phút</span>
+          <span className="collection-chip">Đề thi</span>
+          <span className="collection-chip collection-chip-secondary">{fileTypeLabel}</span>
+          {topicName ? <span className="collection-chip collection-chip-warm">{topicName}</span> : null}
         </div>
 
-        <h2>{quiz.tieu_de}</h2>
-        <p>{quiz.mo_ta || "Bài kiểm tra này đã sẵn sàng để học sinh luyện tập theo chủ đề."}</p>
+        <h2>{exam.tieu_de}</h2>
+        <p>{exam.mo_ta || "Tài liệu đề thi đã sẵn sàng để tải về và sử dụng trong quá trình ôn luyện."}</p>
 
         <div className="collection-card-meta">
-          <span className="collection-chip">{quiz.questionCount} câu hỏi</span>
-          <span className="collection-chip">Đã xuất bản</span>
+          <span className="collection-chip">{exam.ten_nguon || "Tệp tải xuống"}</span>
         </div>
 
         <div className="collection-card-actions">
-          <Link className="collection-card-action" to={`/luyen-tap/${quiz.id}`}>
-            Vào làm bài
-          </Link>
+          <a className="collection-card-action" href={downloadUrl} target="_blank" rel="noreferrer" download>
+            Tải đề thi
+          </a>
         </div>
       </div>
     </article>
@@ -38,6 +56,9 @@ function QuizCard({ quiz }) {
 function CollectionCardSkeleton() {
   return (
     <article className="collection-card collection-card-skeleton" aria-hidden="true">
+      <div className="collection-card-media">
+        <div className="collection-skeleton collection-skeleton-thumb" />
+      </div>
       <div className="collection-card-body">
         <div className="collection-card-chips">
           <div className="collection-skeleton collection-skeleton-chip" />
@@ -46,10 +67,6 @@ function CollectionCardSkeleton() {
         <div className="collection-skeleton collection-skeleton-title" />
         <div className="collection-skeleton collection-skeleton-text collection-skeleton-text-wide" />
         <div className="collection-skeleton collection-skeleton-text" />
-        <div className="collection-card-meta">
-          <div className="collection-skeleton collection-skeleton-chip" />
-          <div className="collection-skeleton collection-skeleton-chip" />
-        </div>
         <div className="collection-card-actions">
           <div className="collection-skeleton collection-skeleton-action" />
         </div>
@@ -79,7 +96,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <nav className="collection-pagination" aria-label="Phân trang bài kiểm tra">
+    <nav className="collection-pagination" aria-label="Phân trang đề thi">
       <button type="button" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
         Trang trước
       </button>
@@ -104,9 +121,9 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
   );
 }
 
-function LuyenTap() {
+function ThuVienDeThi() {
   const [topics, setTopics] = useState([]);
-  const [quizzes, setQuizzes] = useState([]);
+  const [exams, setExams] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
@@ -117,13 +134,13 @@ function LuyenTap() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadQuizPage() {
+    async function loadPage() {
       setLoading(true);
       setError("");
 
       const [
         { data: topicsData, error: topicsError },
-        { data: quizData, error: quizError },
+        { data: examsData, error: examsError },
       ] = await Promise.all([
         supabase
           .from("chu_de")
@@ -131,8 +148,8 @@ function LuyenTap() {
           .eq("dang_hien_thi", true)
           .order("thu_tu_hien_thi", { ascending: true }),
         supabase
-          .from("bai_kiem_tra")
-          .select("id, tieu_de, mo_ta, chu_de_id, thoi_gian_lam_bai_phut, da_xuat_ban")
+          .from("de_thi")
+          .select("id, tieu_de, mo_ta, duong_dan_file, duong_dan_anh_dai_dien, ten_nguon, chu_de_id")
           .eq("da_xuat_ban", true)
           .order("id", { ascending: false }),
       ]);
@@ -142,84 +159,58 @@ function LuyenTap() {
       if (topicsError) {
         setError(`Không thể tải chủ đề: ${topicsError.message}`);
         setTopics([]);
-        setQuizzes([]);
-        setLoading(false);
-        return;
-      }
-
-      if (quizError) {
-        setError(`Không thể tải bài kiểm tra: ${quizError.message}`);
-        setTopics(topicsData || []);
-        setQuizzes([]);
-        setLoading(false);
-        return;
-      }
-
-      const loadedQuizzes = quizData || [];
-      const quizIds = loadedQuizzes.map((quiz) => quiz.id);
-      const topicNameById = new Map((topicsData || []).map((topic) => [topic.id, topic.ten_chu_de]));
-      let questionCountsByQuizId = new Map();
-
-      if (quizIds.length > 0) {
-        const { data: questionRows, error: questionError } = await supabase
-          .from("cau_hoi_kiem_tra")
-          .select("id, bai_kiem_tra_id")
-          .in("bai_kiem_tra_id", quizIds);
-
-        if (!isMounted) return;
-
-        if (questionError) {
-          setError(`Không thể tải câu hỏi: ${questionError.message}`);
-          setTopics(topicsData || []);
-          setQuizzes([]);
-          setLoading(false);
-          return;
+        setExams([]);
+      } else if (examsError) {
+        if (examsError.message?.includes("relation") && examsError.message?.includes("de_thi")) {
+          setError(
+            "Bảng de_thi chưa tồn tại trong Supabase. Cần chạy file supabase/seeds/2026-06-15_de_thi_thu_vien.sql rồi tải lại trang.",
+          );
+        } else {
+          setError(`Không thể tải đề thi: ${examsError.message}`);
         }
-
-        questionCountsByQuizId = (questionRows || []).reduce((countMap, question) => {
-          countMap.set(question.bai_kiem_tra_id, (countMap.get(question.bai_kiem_tra_id) || 0) + 1);
-          return countMap;
-        }, new Map());
+        setTopics(topicsData || []);
+        setExams([]);
+      } else {
+        setTopics(topicsData || []);
+        setExams(examsData || []);
       }
 
-      setTopics(topicsData || []);
-      setQuizzes(
-        loadedQuizzes.map((quiz) => ({
-          ...quiz,
-          questionCount: questionCountsByQuizId.get(quiz.id) || 0,
-          topicName: topicNameById.get(quiz.chu_de_id) || "Chưa gắn chủ đề",
-        })),
-      );
       setLoading(false);
     }
 
-    loadQuizPage();
+    loadPage();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const filteredQuizzes = useMemo(() => {
+  const topicNameById = useMemo(
+    () => new Map(topics.map((topic) => [topic.id, topic.ten_chu_de])),
+    [topics],
+  );
+
+  const filteredExams = useMemo(() => {
     const keyword = deferredSearchText.trim().toLowerCase();
 
-    return quizzes.filter((quiz) => {
-      const matchesTopic = selectedTopicId === "tat-ca" || quiz.chu_de_id === Number(selectedTopicId);
+    return exams.filter((exam) => {
+      const topicName = topicNameById.get(exam.chu_de_id) || "";
+      const matchesTopic = selectedTopicId === "tat-ca" || exam.chu_de_id === Number(selectedTopicId);
       const matchesSearch =
         keyword === "" ||
-        quiz.tieu_de?.toLowerCase().includes(keyword) ||
-        quiz.mo_ta?.toLowerCase().includes(keyword) ||
-        quiz.topicName?.toLowerCase().includes(keyword);
+        exam.tieu_de?.toLowerCase().includes(keyword) ||
+        exam.mo_ta?.toLowerCase().includes(keyword) ||
+        topicName.toLowerCase().includes(keyword);
 
       return matchesTopic && matchesSearch;
     });
-  }, [deferredSearchText, quizzes, selectedTopicId]);
+  }, [deferredSearchText, exams, selectedTopicId, topicNameById]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredQuizzes.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(filteredExams.length / EXAMS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
-  const paginatedQuizzes = filteredQuizzes.slice(
-    (currentPageSafe - 1) * ITEMS_PER_PAGE,
-    currentPageSafe * ITEMS_PER_PAGE,
+  const paginatedExams = filteredExams.slice(
+    (currentPageSafe - 1) * EXAMS_PER_PAGE,
+    currentPageSafe * EXAMS_PER_PAGE,
   );
 
   return (
@@ -231,14 +222,14 @@ function LuyenTap() {
           className="collection-hero"
           style={{
             "--collection-hero-image":
-              'url("https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=1600")',
+              'url("https://images.unsplash.com/photo-1455885666463-9b98d1df7e04?q=80&w=1600")',
           }}
         >
           <div className="collection-hero-content">
-            <p className="collection-eyebrow">Luyện tập</p>
-            <h1>Danh sách bài kiểm tra theo chủ đề với bố cục gọn và dễ chọn hơn</h1>
+            <p className="collection-eyebrow">Thư viện - Đề thi</p>
+            <h1>Danh sách đề thi được tách riêng để tải và tra cứu nhanh hơn</h1>
             <p>
-              Bài kiểm tra được hiển thị theo dạng thẻ rõ ràng, cho phép người học xem nhanh chủ đề, số câu hỏi và thời gian làm bài trước khi vào làm.
+              Toàn bộ đề thi được hiển thị theo dạng thẻ rõ ràng, có lọc theo chủ đề và ưu tiên thao tác tải về nhanh.
             </p>
           </div>
         </section>
@@ -248,11 +239,13 @@ function LuyenTap() {
             <div className="collection-breadcrumbs">
               <Link to="/">Trang chủ</Link>
               <span>/</span>
-              <strong>Luyện tập</strong>
+              <Link to="/thu-vien">Thư viện</Link>
+              <span>/</span>
+              <strong>Đề thi</strong>
             </div>
 
-            <Link to="/" className="collection-topbar-action">
-              Về trang chủ
+            <Link to="/thu-vien" className="collection-topbar-action">
+              Về hub thư viện
             </Link>
           </div>
 
@@ -260,7 +253,7 @@ function LuyenTap() {
             <>
               <ControlsSkeleton />
               <section className="collection-grid">
-                {Array.from({ length: QUIZ_SKELETON_COUNT }, (_, index) => (
+                {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
                   <CollectionCardSkeleton key={index} />
                 ))}
               </section>
@@ -269,7 +262,7 @@ function LuyenTap() {
             <>
               <section className="collection-controls">
                 <label>
-                  <span>Tìm kiếm bài kiểm tra</span>
+                  <span>Tìm kiếm đề thi</span>
                   <input
                     type="search"
                     value={searchText}
@@ -302,15 +295,15 @@ function LuyenTap() {
 
               {error ? (
                 <section className="collection-status collection-status-error">{error}</section>
-              ) : filteredQuizzes.length === 0 ? (
+              ) : filteredExams.length === 0 ? (
                 <section className="collection-empty">
-                  Chưa có bài kiểm tra phù hợp. Admin có thể tạo và xuất bản bài kiểm tra trong trang quản trị.
+                  Chưa có đề thi phù hợp với bộ lọc hiện tại. Admin có thể thêm dữ liệu trong bảng <strong>de_thi</strong>.
                 </section>
               ) : (
                 <>
                   <section className="collection-grid">
-                    {paginatedQuizzes.map((quiz) => (
-                      <QuizCard key={quiz.id} quiz={quiz} />
+                    {paginatedExams.map((exam) => (
+                      <ExamCard key={exam.id} exam={exam} topicName={topicNameById.get(exam.chu_de_id) || ""} />
                     ))}
                   </section>
 
@@ -325,4 +318,4 @@ function LuyenTap() {
   );
 }
 
-export default LuyenTap;
+export default ThuVienDeThi;
