@@ -1,10 +1,12 @@
-const defaultR2PublicBaseUrl =
-  "https://pub-55a901fcb1b5479abeead7b3dbd3ae26.r2.dev";
-
-const r2PublicBaseUrl = (
-  import.meta.env.VITE_R2_PUBLIC_BASE_URL || defaultR2PublicBaseUrl
-).replace(/\/+$/, "");
+const r2PublicBaseUrl = (import.meta.env.CLOUDFLARE_R2_PUBLIC_BASE_URL || "").replace(
+  /\/+$/,
+  "",
+);
 const localR2ObjectBaseUrl = "/dev-r2-object";
+
+if (!r2PublicBaseUrl) {
+  throw new Error("Missing CLOUDFLARE_R2_PUBLIC_BASE_URL.");
+}
 
 function normalizeObjectPath(filePath) {
   return String(filePath)

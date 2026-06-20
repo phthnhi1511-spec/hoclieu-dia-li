@@ -94,11 +94,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate public R2 URL
+        env:
+          CLOUDFLARE_R2_PUBLIC_BASE_URL: ${{ secrets.CLOUDFLARE_R2_PUBLIC_BASE_URL }}
+        run: |
+          if [[ -z "$CLOUDFLARE_R2_PUBLIC_BASE_URL" || "$CLOUDFLARE_R2_PUBLIC_BASE_URL" != https://* ]]; then
+            echo "::error::CLOUDFLARE_R2_PUBLIC_BASE_URL must be a public HTTPS URL"
+            exit 1
+          fi
+          if [[ "$CLOUDFLARE_R2_PUBLIC_BASE_URL" == *r2.cloudflarestorage.com* ]]; then
+            echo "::error::CLOUDFLARE_R2_PUBLIC_BASE_URL cannot use the private S3 API endpoint"
+            exit 1
+          fi
+
       - name: Build
         run: npm run build
         env:
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          CLOUDFLARE_R2_PUBLIC_BASE_URL: ${{ secrets.CLOUDFLARE_R2_PUBLIC_BASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
 

@@ -292,6 +292,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: mode === "production" ? productionBasePath : "/",
+    envPrefix: ["VITE_", "CLOUDFLARE_R2_PUBLIC_BASE_URL"],
     plugins: [react(), createDevR2FunctionPlugin(env)],
   };
 });
