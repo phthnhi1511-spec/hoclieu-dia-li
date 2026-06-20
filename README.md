@@ -12,12 +12,17 @@ Repository Secrets sau:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ADMIN_PASSWORD`
-- `VITE_SUPABASE_FUNCTIONS_URL` (khong bat buoc)
 - `VITE_R2_PUBLIC_BASE_URL` (khong bat buoc)
+- `SUPABASE_ACCESS_TOKEN` (bat buoc de deploy Edge Functions, khong co tien to `VITE_`)
 
 Luu y: bien Vite duoc dua vao JavaScript phia trinh duyet. Khong dat
 `service_role` key, R2 secret key hoac bat ky khoa bi mat backend nao vao cac
 bien `VITE_*`.
+
+`SUPABASE_ACCESS_TOKEN` duoc tao trong Supabase Dashboard, muc Account > Access
+Tokens. GitHub Actions dung token nay theo cach khong tuong tac, khong can chay
+`supabase login`. R2 access key va secret key chi dat trong Supabase Edge
+Function Secrets, khong dat trong GitHub Pages build.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
