@@ -288,8 +288,10 @@ function createDevR2FunctionPlugin(env) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const productionBasePath = env.VITE_BASE_PATH || "/hoclieu-dia-li/";
 
   return {
+    base: mode === "production" ? productionBasePath : "/",
     plugins: [react(), createDevR2FunctionPlugin(env)],
   };
 });

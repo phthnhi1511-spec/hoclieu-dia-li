@@ -1,5 +1,24 @@
 # React + Vite
 
+## Deploy GitHub Pages
+
+Website duoc build va deploy tu dong khi push len nhanh `dev` bang workflow
+`.github/workflows/deploy-pages.yml`. Ban build production su dung base path
+`/hoclieu-dia-li/` va co `404.html` de cac route React van mo duoc khi tai lai trang.
+
+Trong GitHub, chon `Settings > Pages > Source: GitHub Actions` va khai bao cac
+Repository Secrets sau:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_ADMIN_PASSWORD`
+- `VITE_SUPABASE_FUNCTIONS_URL` (khong bat buoc)
+- `VITE_R2_PUBLIC_BASE_URL` (khong bat buoc)
+
+Luu y: bien Vite duoc dua vao JavaScript phia trinh duyet. Khong dat
+`service_role` key, R2 secret key hoac bat ky khoa bi mat backend nao vao cac
+bien `VITE_*`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
