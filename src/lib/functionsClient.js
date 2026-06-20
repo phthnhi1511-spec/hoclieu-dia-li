@@ -1,7 +1,12 @@
 import { supabase } from "./supabaseClient";
 
-export const functionsBaseUrl =
+const configuredFunctionsBaseUrl =
   import.meta.env.VITE_SUPABASE_FUNCTIONS_URL?.replace(/\/+$/, "") || "";
+
+export const functionsBaseUrl =
+  import.meta.env.DEV || /^https?:\/\//i.test(configuredFunctionsBaseUrl)
+    ? configuredFunctionsBaseUrl
+    : "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export async function invokeFunction(functionName, body) {
