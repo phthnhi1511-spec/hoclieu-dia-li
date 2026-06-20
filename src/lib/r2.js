@@ -1,5 +1,5 @@
 const defaultR2PublicBaseUrl =
-  "https://04443c5d0ebe24eaa3c36a88b0f7dc6e.r2.cloudflarestorage.com/hoc-lieu";
+  "https://pub-55a901fcb1b5479abeead7b3dbd3ae26.r2.dev";
 
 const r2PublicBaseUrl = (
   import.meta.env.VITE_R2_PUBLIC_BASE_URL || defaultR2PublicBaseUrl
