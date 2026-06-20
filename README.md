@@ -12,7 +12,7 @@ Repository Secrets sau:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ADMIN_PASSWORD`
-- `VITE_R2_PUBLIC_BASE_URL` (khong bat buoc)
+- `VITE_R2_PUBLIC_BASE_URL` (bat buoc, public `r2.dev` URL hoac custom domain)
 - `SUPABASE_ACCESS_TOKEN` (bat buoc de deploy Edge Functions, khong co tien to `VITE_`)
 - `CLOUDFLARE_R2_ACCESS_KEY` (bat buoc, chi dung trong job deploy function)
 - `CLOUDFLARE_R2_SECRET_KEY` (bat buoc, chi dung trong job deploy function)
@@ -26,6 +26,11 @@ Tokens. GitHub Actions dung token nay theo cach khong tuong tac, khong can chay
 `supabase login`. Workflow dong bo R2 access key va secret key vao Supabase Edge
 Function Secrets truoc khi deploy; hai gia tri nay khong duoc dua vao GitHub
 Pages build hoac cac bien `VITE_*`.
+
+Production doc file truc tiep tu `VITE_R2_PUBLIC_BASE_URL` de tranh do tre cua
+Edge Function proxy. Khong dung endpoint S3 `*.r2.cloudflarestorage.com`; trong
+Cloudflare R2, can bat Public Development URL (`pub-....r2.dev`) hoac gan custom
+domain cho bucket `hoc-lieu`.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

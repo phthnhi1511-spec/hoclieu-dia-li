@@ -1,5 +1,3 @@
-import { invokeFunction, functionsBaseUrl } from "./functionsClient";
-
 const defaultR2PublicBaseUrl =
   "https://04443c5d0ebe24eaa3c36a88b0f7dc6e.r2.cloudflarestorage.com/hoc-lieu";
 
@@ -7,9 +5,6 @@ const r2PublicBaseUrl = (
   import.meta.env.VITE_R2_PUBLIC_BASE_URL || defaultR2PublicBaseUrl
 ).replace(/\/+$/, "");
 const localR2ObjectBaseUrl = "/dev-r2-object";
-const defaultFunctionsBaseUrl = import.meta.env.VITE_SUPABASE_URL
-  ? `${import.meta.env.VITE_SUPABASE_URL.replace(/\/+$/, "")}/functions/v1`
-  : "";
 
 function normalizeObjectPath(filePath) {
   return String(filePath)
@@ -49,13 +44,7 @@ export function buildR2ProxyFileUrl(filePath) {
     return `${localR2ObjectBaseUrl}/${normalizedPath}`;
   }
 
-  const activeFunctionsBaseUrl = (functionsBaseUrl || defaultFunctionsBaseUrl).replace(/\/+$/, "");
-
-  if (!activeFunctionsBaseUrl) {
-    return `${r2PublicBaseUrl}/${normalizedPath}`;
-  }
-
-  return `${activeFunctionsBaseUrl}/r2-file-proxy?objectKey=${normalizedPath}`;
+  return `${r2PublicBaseUrl}/${normalizedPath}`;
 }
 
 export function getR2PublicBaseUrl() {
@@ -93,36 +82,21 @@ export async function resolveR2ObjectUrl(filePath, options = {}) {
   const normalizedPath = String(filePath).replace(/^\/+/, "");
   const expiresIn = Math.max(60, Math.min(Number(options.expiresIn) || 3600, 86400));
 
+  if (!import.meta.env.DEV) {
+    return buildR2PublicFileUrl(normalizedPath);
+  }
+
   try {
-    if (!functionsBaseUrl && import.meta.env.DEV) {
-      const data = await invokeLocalFunction("r2-sign-file-url", {
-        objectKey: normalizedPath,
-        expiresIn,
-      });
+    const data = await invokeLocalFunction("r2-sign-file-url", {
+      objectKey: normalizedPath,
+      expiresIn,
+    });
 
-      if (data?.fileUrl) {
-        return data.fileUrl;
-      }
-    } else {
-      const { data, error } = await invokeFunction("r2-sign-file-url", {
-        objectKey: normalizedPath,
-        expiresIn,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data?.fileUrl) {
-        return data.fileUrl;
-      }
+    if (data?.fileUrl) {
+      return data.fileUrl;
     }
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      return `${localR2ObjectBaseUrl}/${normalizeObjectPath(normalizedPath)}`;
-    }
-
-    throw error;
+  } catch {
+    return `${localR2ObjectBaseUrl}/${normalizeObjectPath(normalizedPath)}`;
   }
 
   return buildR2PublicFileUrl(normalizedPath);
