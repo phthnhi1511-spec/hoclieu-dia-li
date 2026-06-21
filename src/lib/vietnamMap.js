@@ -1,4 +1,5 @@
 import rawVietnamGeoJson from "../data/vietnam-34-provinces.geo.json";
+import vietnamArchipelagoGeoJson from "../data/vietnam-archipelagos.geo.json";
 
 export const VIETNAM_34_PROVINCES = [
   { name: "Hà Nội", slug: "ha-noi", mergedFrom: ["Hà Nội", "Hà Tây"] },
@@ -41,70 +42,7 @@ export const VIETNAM_34_PROVINCES = [
   { name: "Cà Mau", slug: "ca-mau", mergedFrom: ["Cà Mau", "Bạc Liêu"] },
 ];
 
-function createIslandPolygon([centerX, centerY, radiusX, radiusY, skew = 0]) {
-  const ring = [
-    [centerX - radiusX, centerY - radiusY * 0.2],
-    [centerX - radiusX * 0.45 + skew, centerY - radiusY],
-    [centerX + radiusX * 0.35, centerY - radiusY * 0.75],
-    [centerX + radiusX, centerY + radiusY * 0.05],
-    [centerX + radiusX * 0.25 - skew, centerY + radiusY],
-    [centerX - radiusX * 0.65, centerY + radiusY * 0.65],
-  ];
-
-  return [[...ring, ring[0]]];
-}
-
-function createArchipelagoFeature(name, key, islands) {
-  return {
-    type: "Feature",
-    geometry: {
-      type: "MultiPolygon",
-      coordinates: islands.map(createIslandPolygon),
-    },
-    properties: {
-      "hc-key": key,
-      name,
-    },
-  };
-}
-
-export const VIETNAM_ARCHIPELAGO_GEOJSON = {
-  type: "FeatureCollection",
-  features: [
-    createArchipelagoFeature("Quần đảo Hoàng Sa", "vn-hoang-sa", [
-      [5100, 5600, 34, 22, 5],
-      [5250, 5400, 24, 16, -4],
-      [5400, 5700, 30, 18, 3],
-      [5550, 5300, 22, 14, -3],
-      [5700, 5550, 28, 18, 4],
-      [5900, 5150, 20, 13, 2],
-      [6020, 5480, 18, 12, -2],
-      [5350, 5000, 16, 11, 2],
-      [5680, 4800, 19, 12, -3],
-    ]),
-    createArchipelagoFeature("Quần đảo Trường Sa", "vn-truong-sa", [
-      [6220, 2150, 24, 16, 3],
-      [6360, 2030, 18, 12, -2],
-      [6510, 2250, 26, 17, 4],
-      [6660, 1910, 20, 13, -3],
-      [6800, 2110, 29, 18, 5],
-      [6960, 1810, 18, 12, -2],
-      [6130, 1640, 20, 14, 2],
-      [6310, 1480, 27, 17, -4],
-      [6490, 1710, 18, 12, 3],
-      [6680, 1390, 25, 16, -3],
-      [6880, 1570, 21, 14, 4],
-      [7050, 1260, 17, 11, -2],
-      [6200, 1040, 19, 13, 3],
-      [6400, 890, 24, 15, -3],
-      [6610, 1080, 17, 12, 2],
-      [6830, 760, 23, 15, -4],
-      [6990, 930, 16, 11, 2],
-      [6520, 430, 18, 12, -2],
-      [6760, 280, 21, 14, 3],
-    ]),
-  ],
-};
+export const VIETNAM_ARCHIPELAGO_GEOJSON = vietnamArchipelagoGeoJson;
 
 export const VIETNAM_MAP_EXTENT_GEOJSON = {
   type: "FeatureCollection",
@@ -113,11 +51,11 @@ export const VIETNAM_MAP_EXTENT_GEOJSON = {
     geometry: {
       type: "Polygon",
       coordinates: [[
-        [-950, -950],
-        [7100, -950],
-        [7100, 9900],
+        [-950, -1650],
+        [8200, -1650],
+        [8200, 9900],
         [-950, 9900],
-        [-950, -950],
+        [-950, -1650],
       ]],
     },
     properties: {

@@ -246,7 +246,7 @@ function BanDo() {
         <p>
           Click trực tiếp vào tỉnh/thành để xem tỉnh đó đang thuộc vùng kinh tế nào,
           đồng thời đọc nhanh các thông tin vùng do admin quản lý. Hoàng Sa và Trường Sa
-          được thể hiện tượng trưng trên bản đồ.
+          được hiển thị theo dữ liệu đường bờ và rạn san hô thực tế.
         </p>
       </section>
 
