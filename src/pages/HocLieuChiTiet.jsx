@@ -3,7 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import { renderAsync } from "docx-preview";
 import { pdfjs } from "react-pdf";
 import Header from "../components/Header";
-import { buildR2ProxyFileUrl, getR2DownloadUrl, resolveR2ObjectUrl } from "../lib/r2";
+import {
+  buildR2ProxyFileUrl,
+  buildR2ReadableFileUrl,
+  getR2DownloadUrl,
+  resolveR2ObjectUrl,
+} from "../lib/r2";
 import {
   getFileExtension,
   getMaterialKind,
@@ -847,11 +852,14 @@ function HocLieuChiTiet() {
         return;
       }
 
-      const nextFileUrl = buildR2ProxyFileUrl(material.duong_dan_file);
+      const materialKind = getMaterialKind(material, types);
+      const nextFileUrl =
+        materialKind === "atlat"
+          ? buildR2ReadableFileUrl(material.duong_dan_file)
+          : buildR2ProxyFileUrl(material.duong_dan_file);
       const nextImageUrls = parseMediaList(material.duong_dan_anh_dai_dien).map((imagePath) =>
         buildR2ProxyFileUrl(imagePath),
       );
-      const materialKind = getMaterialKind(material, types);
       const fileExtension = getFileExtension(material.duong_dan_file);
       const needsOfficeViewerUrl =
         materialKind === "powerpoint" ||

@@ -1,10 +1,13 @@
-import { invokeFunction } from "./functionsClient";
+import { functionsBaseUrl, invokeFunction } from "./functionsClient";
 
 const r2PublicBaseUrl = (import.meta.env.CLOUDFLARE_R2_PUBLIC_BASE_URL || "").replace(
   /\/+$/,
   "",
 );
 const localR2ObjectBaseUrl = "/dev-r2-object";
+const defaultFunctionsBaseUrl = import.meta.env.VITE_SUPABASE_URL
+  ? `${import.meta.env.VITE_SUPABASE_URL.replace(/\/+$/, "")}/functions/v1`
+  : "";
 
 if (!r2PublicBaseUrl) {
   throw new Error("Missing CLOUDFLARE_R2_PUBLIC_BASE_URL.");
@@ -71,6 +74,22 @@ function getObjectKey(filePath) {
   }
 
   return "";
+}
+
+export function buildR2ReadableFileUrl(filePath) {
+  const objectKey = getObjectKey(filePath);
+
+  if (!objectKey) return filePath || "";
+
+  if (import.meta.env.DEV) {
+    return `${localR2ObjectBaseUrl}/${normalizeObjectPath(objectKey)}`;
+  }
+
+  const activeFunctionsBaseUrl = (functionsBaseUrl || defaultFunctionsBaseUrl).replace(/\/+$/, "");
+
+  if (!activeFunctionsBaseUrl) return buildR2PublicFileUrl(objectKey);
+
+  return `${activeFunctionsBaseUrl}/r2-file-proxy?objectKey=${normalizeObjectPath(objectKey)}`;
 }
 
 export async function getR2DownloadUrl(filePath, downloadFileName) {
