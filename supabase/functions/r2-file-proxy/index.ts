@@ -1,4 +1,5 @@
 import { GetObjectCommand, S3Client } from "npm:@aws-sdk/client-s3@3.916.0";
+import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3.916.0";
 
 const defaultAccountId = "04443c5d0ebe24eaa3c36a88b0f7dc6e";
 const defaultBucketName = "hoc-lieu";
@@ -63,34 +64,40 @@ Deno.serve(async (request) => {
   });
 
   try {
-    const objectResponse = await client.send(
+    const signedFileUrl = await getSignedUrl(
+      client,
       new GetObjectCommand({
         Bucket: bucketName,
         Key: objectKey,
       }),
+      { expiresIn: 60 },
     );
+    const objectResponse = await fetch(signedFileUrl);
 
-    if (!objectResponse.Body) {
-      return buildErrorResponse("File not found.", 404);
+    if (!objectResponse.ok) {
+      return buildErrorResponse("File not found.", objectResponse.status);
     }
 
     const headers = new Headers(corsHeaders);
+    const contentType = objectResponse.headers.get("Content-Type");
+    const contentLength = objectResponse.headers.get("Content-Length");
+    const etag = objectResponse.headers.get("ETag");
 
-    if (objectResponse.ContentType) {
-      headers.set("Content-Type", objectResponse.ContentType);
+    if (contentType) {
+      headers.set("Content-Type", contentType);
     }
 
-    if (objectResponse.ContentLength) {
-      headers.set("Content-Length", String(objectResponse.ContentLength));
+    if (contentLength) {
+      headers.set("Content-Length", contentLength);
     }
 
-    if (objectResponse.ETag) {
-      headers.set("ETag", objectResponse.ETag);
+    if (etag) {
+      headers.set("ETag", etag);
     }
 
-    const objectStream = objectResponse.Body.transformToWebStream();
+    const objectBytes = await objectResponse.arrayBuffer();
 
-    return new Response(objectStream, {
+    return new Response(objectBytes, {
       status: 200,
       headers,
     });
