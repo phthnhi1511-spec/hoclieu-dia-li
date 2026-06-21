@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import BackToTopButton from "./components/BackToTopButton";
+import FloatingContactButton from "./components/FloatingContactButton";
 import ScrollToTop from "./components/ScrollToTop";
 import Admin from "./pages/Admin";
 import BanDo from "./pages/BanDo";
@@ -34,6 +35,7 @@ function App() {
         <Route path="/hoc-lieu/:duongDan/:materialId" element={<HocLieuChiTiet />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
+      <FloatingContactButton />
       <BackToTopButton />
     </>
   );

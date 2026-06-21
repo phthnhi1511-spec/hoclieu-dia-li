@@ -40,6 +40,8 @@ export const HOME_CONFIG_KEY_OPTIONS = [
   { label: "Footer - Tên liên hệ", value: "footer_contact_name" },
   { label: "Footer - Email liên hệ", value: "footer_contact_email" },
   { label: "Footer - Đơn vị", value: "footer_contact_school" },
+  { label: "Liên hệ nổi - Ảnh đại diện", value: "floating_contact_avatar" },
+  { label: "Liên hệ nổi - Link Facebook", value: "floating_contact_facebook_url" },
 ];
 
 export const HOME_SECTION_LIMITS = {

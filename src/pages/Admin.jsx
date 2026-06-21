@@ -13,6 +13,17 @@ import AdminQuizBuilder from "./AdminQuizBuilder";
 import AdminQuizResultsManager from "./AdminQuizResultsManager";
 import "./Admin.css";
 
+const floatingContactAvatarUpload = {
+  accept: ".png,.jpg,.jpeg,.webp",
+  functionName: "r2-presign-upload",
+  helperText: "Tải ảnh đại diện cho nút liên hệ nổi lên Cloudflare R2.",
+  provider: "cloudflare-r2",
+};
+
+function isImageUploadField(field) {
+  return Boolean(field.upload?.accept && /\.(png|jpe?g|webp)/i.test(field.upload.accept));
+}
+
 const sessionKey = "hoclieu_admin_unlocked";
 
 function getInitialForm(fields) {
@@ -269,10 +280,34 @@ function Admin() {
   }
 
   function handleChange(field, value) {
+    if (selectedTable.name === "cau_hinh_website" && field.name === "khoa_cau_hinh") {
+      setUploadFiles((current) => {
+        const nextFiles = { ...current };
+        delete nextFiles.gia_tri_cau_hinh;
+        return nextFiles;
+      });
+    }
+
     setFormData((current) => ({
       ...current,
       [field.name]: value,
     }));
+  }
+
+  function getActiveField(field) {
+    if (
+      selectedTable.name === "cau_hinh_website" &&
+      field.name === "gia_tri_cau_hinh" &&
+      formData.khoa_cau_hinh === "floating_contact_avatar"
+    ) {
+      return {
+        ...field,
+        label: "Ảnh đại diện liên hệ",
+        upload: floatingContactAvatarUpload,
+      };
+    }
+
+    return field;
   }
 
   function updateMultiSelectField(field, nextValues) {
@@ -479,35 +514,36 @@ function Admin() {
       const payload = {};
 
       for (const field of selectedTable.fields) {
-        const selectedFile = uploadFiles[field.name];
+        const activeField = getActiveField(field);
+        const selectedFile = uploadFiles[activeField.name];
 
-        if (field.upload?.multiple && Array.isArray(selectedFile) && selectedFile.length > 0) {
-          const existingValues = parseMediaList(formData[field.name]);
+        if (activeField.upload?.multiple && Array.isArray(selectedFile) && selectedFile.length > 0) {
+          const existingValues = parseMediaList(formData[activeField.name]);
           const uploadedValues = [];
 
           for (const file of selectedFile) {
-            uploadedValues.push(await uploadFileToCloudflare(field, file));
+            uploadedValues.push(await uploadFileToCloudflare(activeField, file));
           }
 
-          payload[field.name] = [...existingValues, ...uploadedValues].join("\n");
+          payload[activeField.name] = [...existingValues, ...uploadedValues].join("\n");
           continue;
         }
 
-        if (field.upload && selectedFile) {
-          payload[field.name] = await uploadFileToCloudflare(field, selectedFile);
+        if (activeField.upload && selectedFile) {
+          payload[activeField.name] = await uploadFileToCloudflare(activeField, selectedFile);
           continue;
         }
 
         if (
-          field.upload &&
-          field.required &&
-          !formData[field.name] &&
+          activeField.upload &&
+          activeField.required &&
+          !formData[activeField.name] &&
           (!Array.isArray(selectedFile) || selectedFile.length === 0)
         ) {
           throw new Error("Vui lòng chọn file học liệu để tải lên Cloudflare.");
         }
 
-        payload[field.name] = prepareValue(formData[field.name], field);
+        payload[activeField.name] = prepareValue(formData[activeField.name], activeField);
       }
 
       const request = editingId
@@ -553,6 +589,13 @@ function Admin() {
   }
 
   function renderUploadField(field) {
+    const isImageUpload = isImageUploadField(field);
+    const selectedFiles = Array.isArray(uploadFiles[field.name])
+      ? uploadFiles[field.name]
+      : uploadFiles[field.name]
+        ? [uploadFiles[field.name]]
+        : [];
+
     return (
       <>
         <input
@@ -597,7 +640,7 @@ function Admin() {
         {field.upload.multiple ? (
           <>
             <LocalFilesPreview
-              files={Array.isArray(uploadFiles[field.name]) ? uploadFiles[field.name] : []}
+              files={selectedFiles}
               title="Ảnh vừa chọn"
             />
             <UploadPreviewGallery
@@ -607,7 +650,17 @@ function Admin() {
           </>
         ) : null}
 
-        {formData[field.name] && !field.upload.multiple ? (
+        {!field.upload.multiple && isImageUpload ? (
+          <>
+            <LocalFilesPreview files={selectedFiles} title="Ảnh vừa chọn" />
+            <UploadPreviewGallery
+              imageUrls={formData[field.name] ? [buildR2FileUrl(formData[field.name])] : []}
+              title="Ảnh hiện tại"
+            />
+          </>
+        ) : null}
+
+        {formData[field.name] && !field.upload.multiple && !isImageUpload ? (
           <a
             className="admin-inline-link"
             href={buildR2FileUrl(formData[field.name])}
@@ -622,6 +675,12 @@ function Admin() {
   }
 
   function renderField(field) {
+    const activeField = getActiveField(field);
+
+    if (activeField !== field) {
+      return renderUploadField(activeField);
+    }
+
     if (field.type === "multi-select") {
       const selectedValues = parseMultiSelectValues(formData[field.name]);
       const selectedSet = new Set(selectedValues);

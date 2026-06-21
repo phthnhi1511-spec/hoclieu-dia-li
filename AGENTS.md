@@ -92,6 +92,7 @@ The current project is no longer using a minimal generic schema. When working on
 
   * Used for singleton website configuration values.
   * The homepage currently reads hero text, hero background image, section headings, CTA labels/links, and footer contact text from this table via `khoa_cau_hinh` and `gia_tri_cau_hinh`.
+  * Global floating contact settings use `floating_contact_avatar` and `floating_contact_facebook_url`. The avatar value stores an R2 object key or image URL, while the Facebook value stores the external profile/page URL.
 
 * `trang_chu_muc`
 
