@@ -1,7 +1,8 @@
 import Highcharts from "highcharts/highmaps";
 import { useEffect, useMemo, useRef } from "react";
 import {
-  VIETNAM_ARCHIPELAGOS,
+  VIETNAM_ARCHIPELAGO_GEOJSON,
+  VIETNAM_MAP_EXTENT_GEOJSON,
   getBoundsForProvinceNames,
   mergedVietnam34GeoJson,
   normalizeVietnamName,
@@ -77,9 +78,14 @@ function buildChartOptions(onProvinceClickRef) {
       },
       {
         animation: false,
-        color: "#0f440f",
-        cursor: "default",
-        data: VIETNAM_ARCHIPELAGOS,
+        allAreas: true,
+        borderColor: "#0f8f58",
+        borderWidth: 1.2,
+        color: "#d8f2e4",
+        data: VIETNAM_ARCHIPELAGO_GEOJSON.features.map((feature) => ({
+          "hc-key": feature.properties["hc-key"],
+          name: feature.properties.name,
+        })),
         dataLabels: {
           allowOverlap: true,
           crop: false,
@@ -95,15 +101,27 @@ function buildChartOptions(onProvinceClickRef) {
           x: 8,
         },
         enableMouseTracking: false,
-        marker: {
-          fillColor: "#0f440f",
-          lineColor: "#ffffff",
-          lineWidth: 1.5,
-          radius: 4,
-          symbol: "circle",
-        },
+        joinBy: "hc-key",
+        mapData: VIETNAM_ARCHIPELAGO_GEOJSON,
         name: "Quần đảo Việt Nam",
-        type: "mappoint",
+        states: {
+          inactive: { opacity: 1 },
+        },
+        type: "map",
+      },
+      {
+        allAreas: true,
+        animation: false,
+        borderWidth: 0,
+        color: "rgba(255, 255, 255, 0)",
+        data: [{ "hc-key": "vn-map-extent", value: 1 }],
+        enableMouseTracking: false,
+        joinBy: "hc-key",
+        mapData: VIETNAM_MAP_EXTENT_GEOJSON,
+        name: "Phạm vi bản đồ",
+        showInLegend: false,
+        type: "map",
+        zIndex: -1,
       },
     ],
   };
@@ -143,17 +161,17 @@ function VietnamEconomicMap({
         color = withAlpha(baseColor, region ? "3D" : "2E");
       }
 
-      return {
-        "hc-key": feature.properties["hc-key"],
-        borderColor: isSelectedProvince ? "#0f440f" : "#ffffff",
-        borderWidth: isSelectedProvince ? 2.4 : isSelectedRegion ? 1.2 : 1,
-        color,
-        custom: {
-          provinceName,
-          regionId: region?.id || null,
-        },
-        name: provinceName,
-      };
+        return {
+          "hc-key": feature.properties["hc-key"],
+          borderColor: isSelectedProvince ? "#0f440f" : "#ffffff",
+          borderWidth: isSelectedProvince ? 2.4 : isSelectedRegion ? 1.2 : 1,
+          color,
+          custom: {
+            provinceName,
+            regionId: region?.id || null,
+          },
+          name: provinceName,
+        };
     });
   }, [provinceRegionLookup, selectedProvinceKey, selectedRegionId]);
 
@@ -197,12 +215,16 @@ function VietnamEconomicMap({
     chart.series[0].setData(mapData, false, false, false);
 
     if (chart.mapView) {
-      chart.mapView.fitToBounds(
-        focusedBounds || undefined,
-        focusedBounds ? 30 : 18,
-        false,
-        { duration: 250 },
-      );
+      const nextBounds = focusedBounds || chart.series[2]?.bounds;
+
+      if (nextBounds) {
+        chart.mapView.fitToBounds(
+          nextBounds,
+          focusedBounds ? 30 : 18,
+          false,
+          { duration: 250 },
+        );
+      }
     }
 
     chart.redraw();
