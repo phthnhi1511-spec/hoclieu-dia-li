@@ -46,7 +46,7 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: "Missing R2 credentials in Edge Function secrets." }, 500);
   }
 
-  let payload: { objectKey?: string; expiresIn?: number };
+  let payload: { objectKey?: string; expiresIn?: number; downloadFileName?: string };
 
   try {
     payload = await request.json();
@@ -56,6 +56,7 @@ Deno.serve(async (request) => {
 
   const objectKey = payload.objectKey?.trim().replace(/^\/+/, "");
   const expiresIn = Math.max(60, Math.min(Number(payload.expiresIn) || 3600, 86400));
+  const requestedFileName = payload.downloadFileName?.trim();
 
   if (!objectKey) {
     return jsonResponse({ error: "objectKey is required." }, 400);
@@ -70,11 +71,25 @@ Deno.serve(async (request) => {
     },
   });
 
+  const fallbackFileName = objectKey.split("/").pop() || "hoc-lieu";
+  const downloadFileName = (requestedFileName || fallbackFileName)
+    .replace(/[\r\n"]/g, "")
+    .trim();
+  const asciiFileName = downloadFileName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-");
+  const contentDisposition = requestedFileName
+    ? `attachment; filename="${asciiFileName || "hoc-lieu"}"; filename*=UTF-8''${encodeURIComponent(downloadFileName)}`
+    : undefined;
+
   const fileUrl = await getSignedUrl(
     client,
     new GetObjectCommand({
       Bucket: bucketName,
       Key: objectKey,
+      ResponseContentDisposition: contentDisposition,
     }),
     { expiresIn },
   );

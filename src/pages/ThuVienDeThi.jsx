@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import { getExamKindLabel, getExamThumbnailUrl } from "../lib/libraryUtils";
-import { buildR2ProxyFileUrl } from "../lib/r2";
+import { buildR2ProxyFileUrl, getR2DownloadUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
@@ -14,7 +14,33 @@ function ExamCard({ exam, topicName }) {
   const fileTypeLabel = getExamKindLabel(exam.duong_dan_file);
   const downloadUrl = buildR2ProxyFileUrl(exam.duong_dan_file);
   const [hasImageError, setHasImageError] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+  const [downloading, setDownloading] = useState(false);
   const shouldShowImage = Boolean(thumbnailUrl) && !hasImageError;
+
+  async function handleDownload(event) {
+    event.preventDefault();
+
+    if (!exam.duong_dan_file || downloading) return;
+
+    setDownloading(true);
+    setDownloadError("");
+
+    try {
+      const fileExtension = exam.duong_dan_file.split(".").pop()?.split(/[?#]/)[0] || "";
+      const downloadFileName = `${exam.tieu_de || "de-thi"}${fileExtension ? `.${fileExtension}` : ""}`;
+      const signedDownloadUrl = await getR2DownloadUrl(exam.duong_dan_file, downloadFileName);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = signedDownloadUrl;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+    } catch (downloadFileError) {
+      setDownloadError(downloadFileError?.message || "Không thể tải đề thi.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <article className="collection-card">
@@ -44,10 +70,16 @@ function ExamCard({ exam, topicName }) {
         </div>
 
         <div className="collection-card-actions">
-          <a className="collection-card-action" href={downloadUrl} target="_blank" rel="noreferrer" download>
-            Tải đề thi
+          <a
+            className="collection-card-action"
+            href={downloadUrl}
+            onClick={handleDownload}
+            aria-disabled={downloading}
+          >
+            {downloading ? "Đang chuẩn bị..." : "Tải đề thi"}
           </a>
         </div>
+        {downloadError ? <p className="collection-card-download-error">{downloadError}</p> : null}
       </div>
     </article>
   );

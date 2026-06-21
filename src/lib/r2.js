@@ -1,3 +1,5 @@
+import { invokeFunction } from "./functionsClient";
+
 const r2PublicBaseUrl = (import.meta.env.CLOUDFLARE_R2_PUBLIC_BASE_URL || "").replace(
   /\/+$/,
   "",
@@ -51,6 +53,47 @@ export function buildR2ProxyFileUrl(filePath) {
 
 export function getR2PublicBaseUrl() {
   return r2PublicBaseUrl;
+}
+
+function getObjectKey(filePath) {
+  if (!filePath) return "";
+  if (!/^https?:\/\//i.test(filePath)) return String(filePath).replace(/^\/+/, "");
+
+  try {
+    const fileUrl = new URL(filePath);
+    const publicBaseUrl = new URL(`${r2PublicBaseUrl}/`);
+
+    if (fileUrl.origin === publicBaseUrl.origin) {
+      return decodeURIComponent(fileUrl.pathname.replace(/^\/+/, ""));
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+}
+
+export async function getR2DownloadUrl(filePath, downloadFileName) {
+  const objectKey = getObjectKey(filePath);
+
+  if (!objectKey) {
+    throw new Error("Không thể xác định file cần tải.");
+  }
+
+  const payload = {
+    objectKey,
+    downloadFileName,
+    expiresIn: 600,
+  };
+  const { data, error } = import.meta.env.DEV
+    ? { data: await invokeLocalFunction("r2-sign-file-url", payload), error: null }
+    : await invokeFunction("r2-sign-file-url", payload);
+
+  if (error || !data?.fileUrl) {
+    throw new Error(error?.message || "Không tạo được liên kết tải file.");
+  }
+
+  return data.fileUrl;
 }
 
 async function invokeLocalFunction(functionName, body) {

@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { renderAsync } from "docx-preview";
 import { pdfjs } from "react-pdf";
 import Header from "../components/Header";
-import { buildR2ProxyFileUrl, resolveR2ObjectUrl } from "../lib/r2";
+import { buildR2ProxyFileUrl, getR2DownloadUrl, resolveR2ObjectUrl } from "../lib/r2";
 import {
   getFileExtension,
   getMaterialKind,
@@ -33,7 +33,6 @@ function getPrimaryActionConfig(materialKind, fileUrl) {
   }
 
   return {
-    download: true,
     href: fileUrl,
     label: "Tải về",
   };
@@ -761,6 +760,8 @@ function HocLieuChiTiet() {
   const [officeFileUrl, setOfficeFileUrl] = useState("");
   const [assetLoading, setAssetLoading] = useState(false);
   const [assetError, setAssetError] = useState("");
+  const [downloadError, setDownloadError] = useState("");
+  const [downloading, setDownloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -903,6 +904,30 @@ function HocLieuChiTiet() {
     [fileUrl, materialKind],
   );
 
+  async function handleDownload(event) {
+    event.preventDefault();
+
+    if (!material?.duong_dan_file || downloading) return;
+
+    setDownloading(true);
+    setDownloadError("");
+
+    try {
+      const extension = getFileExtension(material.duong_dan_file);
+      const downloadFileName = `${material.tieu_de || "hoc-lieu"}${extension ? `.${extension}` : ""}`;
+      const downloadUrl = await getR2DownloadUrl(material.duong_dan_file, downloadFileName);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+    } catch (downloadFileError) {
+      setDownloadError(downloadFileError?.message || "Không thể tải file.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <div>
       <Header />
@@ -936,15 +961,17 @@ function HocLieuChiTiet() {
                 {primaryAction ? (
                   <a
                     href={primaryAction.href}
-                    download={primaryAction.download}
+                    onClick={materialKind === "worksheet" ? undefined : handleDownload}
                     rel={primaryAction.rel}
                     target={primaryAction.target}
+                    aria-disabled={downloading}
                   >
-                    {primaryAction.label}
+                    {downloading ? "Đang chuẩn bị..." : primaryAction.label}
                   </a>
                 ) : null}
                 <Link to={`/hoc-lieu/${duongDan}`}>Quay lại danh sách</Link>
               </div>
+              {downloadError ? <p className="material-detail-download-error">{downloadError}</p> : null}
             </section>
 
             <section

@@ -94,6 +94,13 @@
   background: #607166;
 }
 
+.material-detail-download-error {
+  color: #b71c1c !important;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 10px !important;
+}
+
 .material-detail-status {
   color: #53675a;
   font-weight: 700;

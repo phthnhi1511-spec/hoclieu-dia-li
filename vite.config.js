@@ -246,6 +246,7 @@ function createDevR2FunctionPlugin(env) {
           const payload = rawBody ? JSON.parse(rawBody) : {};
           const objectKey = payload.objectKey?.trim().replace(/^\/+/, "");
           const expiresIn = Math.max(60, Math.min(Number(payload.expiresIn) || 3600, 86400));
+          const requestedFileName = payload.downloadFileName?.trim();
 
           if (!objectKey) {
             res.statusCode = 400;
@@ -255,11 +256,24 @@ function createDevR2FunctionPlugin(env) {
           }
 
           const client = createClient();
+          const fallbackFileName = objectKey.split("/").pop() || "hoc-lieu";
+          const downloadFileName = (requestedFileName || fallbackFileName)
+            .replace(/[\r\n"]/g, "")
+            .trim();
+          const asciiFileName = downloadFileName
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z0-9._-]/g, "-")
+            .replace(/-+/g, "-");
+          const contentDisposition = requestedFileName
+            ? `attachment; filename="${asciiFileName || "hoc-lieu"}"; filename*=UTF-8''${encodeURIComponent(downloadFileName)}`
+            : undefined;
           const fileUrl = await getSignedUrl(
             client,
             new GetObjectCommand({
               Bucket: bucketName,
               Key: objectKey,
+              ResponseContentDisposition: contentDisposition,
             }),
             { expiresIn },
           );

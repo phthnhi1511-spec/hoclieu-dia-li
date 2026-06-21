@@ -286,6 +286,13 @@
   transform: translateY(-1px);
 }
 
+.collection-card-download-error {
+  color: #972f22 !important;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 8px 0 0 !important;
+}
+
 .collection-status,
 .collection-empty {
   border-radius: 24px;
