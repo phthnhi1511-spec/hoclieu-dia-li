@@ -229,7 +229,7 @@ function Home() {
         <section
           className="home-hero"
           style={{
-            backgroundImage: `linear-gradient(90deg, rgba(5, 44, 19, 0.76) 0%, rgba(5, 44, 19, 0.36) 42%, rgba(5, 44, 19, 0.2) 100%), url("${heroBackgroundImage}")`,
+            backgroundImage: `linear-gradient(180deg, rgba(5, 44, 19, 0.5) 0%, rgba(5, 44, 19, 0.62) 100%), url("${heroBackgroundImage}")`,
           }}
         >
           <div className="home-hero-inner">
