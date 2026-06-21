@@ -65,9 +65,11 @@ Deno.serve(async (request) => {
       headers.set("ETag", etag);
     }
 
-    const objectBytes = await objectResponse.arrayBuffer();
+    if (!objectResponse.body) {
+      return buildErrorResponse("File body is empty.", 502);
+    }
 
-    return new Response(objectBytes, {
+    return new Response(objectResponse.body, {
       status: 200,
       headers,
     });
