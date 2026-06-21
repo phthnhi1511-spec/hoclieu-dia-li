@@ -1,9 +1,3 @@
-import { GetObjectCommand, S3Client } from "npm:@aws-sdk/client-s3@3.916.0";
-import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3.916.0";
-
-const defaultAccountId = "04443c5d0ebe24eaa3c36a88b0f7dc6e";
-const defaultBucketName = "hoc-lieu";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
@@ -30,21 +24,10 @@ Deno.serve(async (request) => {
     return buildErrorResponse("Method not allowed.", 405);
   }
 
-  const accountId =
-    Deno.env.get("R2_ACCOUNT_ID") ||
-    Deno.env.get("CLOUDFLARE_ACCOUNT_ID") ||
-    defaultAccountId;
-  const bucketName =
-    Deno.env.get("R2_BUCKET_NAME") ||
-    Deno.env.get("CLOUDFLARE_R2_BUCKET_NAME") ||
-    defaultBucketName;
-  const accessKeyId =
-    Deno.env.get("R2_ACCESS_KEY_ID") || Deno.env.get("CLOUDFLARE_R2_ACCESS_KEY");
-  const secretAccessKey =
-    Deno.env.get("R2_SECRET_ACCESS_KEY") || Deno.env.get("CLOUDFLARE_R2_SECRET_KEY");
+  const publicBaseUrl = Deno.env.get("CLOUDFLARE_R2_PUBLIC_BASE_URL")?.replace(/\/+$/, "");
 
-  if (!accessKeyId || !secretAccessKey) {
-    return buildErrorResponse("Missing R2 credentials in Edge Function secrets.");
+  if (!publicBaseUrl) {
+    return buildErrorResponse("Missing CLOUDFLARE_R2_PUBLIC_BASE_URL in Edge Function secrets.");
   }
 
   const requestUrl = new URL(request.url);
@@ -54,25 +37,12 @@ Deno.serve(async (request) => {
     return buildErrorResponse("objectKey is required.", 400);
   }
 
-  const client = new S3Client({
-    region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  });
-
   try {
-    const signedFileUrl = await getSignedUrl(
-      client,
-      new GetObjectCommand({
-        Bucket: bucketName,
-        Key: objectKey,
-      }),
-      { expiresIn: 60 },
-    );
-    const objectResponse = await fetch(signedFileUrl);
+    const normalizedObjectKey = objectKey
+      .split("/")
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+    const objectResponse = await fetch(`${publicBaseUrl}/${normalizedObjectKey}`);
 
     if (!objectResponse.ok) {
       return buildErrorResponse("File not found.", objectResponse.status);
