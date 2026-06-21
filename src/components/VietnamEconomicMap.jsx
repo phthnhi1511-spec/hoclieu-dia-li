@@ -1,6 +1,7 @@
 import Highcharts from "highcharts/highmaps";
 import { useEffect, useMemo, useRef } from "react";
 import {
+  VIETNAM_ARCHIPELAGOS,
   getBoundsForProvinceNames,
   mergedVietnam34GeoJson,
   normalizeVietnamName,
@@ -73,6 +74,36 @@ function buildChartOptions(onProvinceClickRef) {
           },
         },
         type: "map",
+      },
+      {
+        animation: false,
+        color: "#0f440f",
+        cursor: "default",
+        data: VIETNAM_ARCHIPELAGOS,
+        dataLabels: {
+          allowOverlap: true,
+          crop: false,
+          enabled: true,
+          format: "{point.name}",
+          overflow: "allow",
+          style: {
+            color: "#0f440f",
+            fontSize: "12px",
+            fontWeight: "800",
+            textOutline: "2px #ffffff",
+          },
+          x: 8,
+        },
+        enableMouseTracking: false,
+        marker: {
+          fillColor: "#0f440f",
+          lineColor: "#ffffff",
+          lineWidth: 1.5,
+          radius: 4,
+          symbol: "circle",
+        },
+        name: "Quần đảo Việt Nam",
+        type: "mappoint",
       },
     ],
   };
@@ -165,11 +196,9 @@ function VietnamEconomicMap({
 
     chart.series[0].setData(mapData, false, false, false);
 
-    const nextBounds = focusedBounds || chart.series[0].bounds;
-
-    if (nextBounds && chart.mapView) {
+    if (chart.mapView) {
       chart.mapView.fitToBounds(
-        nextBounds,
+        focusedBounds || undefined,
         focusedBounds ? 30 : 18,
         false,
         { duration: 250 },

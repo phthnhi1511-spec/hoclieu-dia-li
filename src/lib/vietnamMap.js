@@ -41,6 +41,11 @@ export const VIETNAM_34_PROVINCES = [
   { name: "Cà Mau", slug: "ca-mau", mergedFrom: ["Cà Mau", "Bạc Liêu"] },
 ];
 
+export const VIETNAM_ARCHIPELAGOS = [
+  { name: "Hoàng Sa", x: 4550, y: 5200 },
+  { name: "Trường Sa", x: 4580, y: 1250 },
+];
+
 const EXTRA_PROVINCE_ALIASES = {
   "ba ria vung tau": "Hồ Chí Minh",
   "ba ria-vung tau": "Hồ Chí Minh",
