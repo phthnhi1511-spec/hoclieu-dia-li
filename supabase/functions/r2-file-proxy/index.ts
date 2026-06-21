@@ -88,9 +88,9 @@ Deno.serve(async (request) => {
       headers.set("ETag", objectResponse.ETag);
     }
 
-    const objectBytes = await objectResponse.Body.transformToByteArray();
+    const objectStream = objectResponse.Body.transformToWebStream();
 
-    return new Response(objectBytes, {
+    return new Response(objectStream, {
       status: 200,
       headers,
     });
