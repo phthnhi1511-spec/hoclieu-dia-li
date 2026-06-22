@@ -19,12 +19,12 @@ const archipelagos = [
   {
     bounds: [15.45, 110.8, 17.45, 113.1],
     key: "vn-hoang-sa",
-    name: "Quần đảo Hoàng Sa",
+    name: "Đặc khu Hoàng Sa",
   },
   {
     bounds: [7.75, 111.5, 11.5, 114.8],
     key: "vn-truong-sa",
-    name: "Quần đảo Trường Sa",
+    name: "Đặc khu Trường Sa",
   },
 ];
 

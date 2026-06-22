@@ -82,6 +82,7 @@ function buildChartOptions(onProvinceClickRef) {
         borderColor: "#0f8f58",
         borderWidth: 1.2,
         color: "#d8f2e4",
+        cursor: "pointer",
         data: VIETNAM_ARCHIPELAGO_GEOJSON.features.map((feature) => ({
           "hc-key": feature.properties["hc-key"],
           name: feature.properties.name,
@@ -100,11 +101,14 @@ function buildChartOptions(onProvinceClickRef) {
           },
           x: 8,
         },
-        enableMouseTracking: false,
         joinBy: "hc-key",
         mapData: VIETNAM_ARCHIPELAGO_GEOJSON,
-        name: "Quần đảo Việt Nam",
+        name: "Đặc khu trên biển",
         states: {
+          hover: {
+            borderColor: "#0f440f",
+            borderWidth: 1.8,
+          },
           inactive: { opacity: 1 },
         },
         type: "map",
@@ -175,13 +179,29 @@ function VietnamEconomicMap({
     });
   }, [provinceRegionLookup, selectedProvinceKey, selectedRegionId]);
 
+  const archipelagoData = useMemo(
+    () => VIETNAM_ARCHIPELAGO_GEOJSON.features.map((feature) => {
+      const isSelected = normalizeVietnamName(feature.properties.name) === selectedProvinceKey;
+
+      return {
+        "hc-key": feature.properties["hc-key"],
+        borderColor: isSelected ? "#0f440f" : "#0f8f58",
+        borderWidth: isSelected ? 2.4 : 1.2,
+        color: isSelected ? "#71d59f" : "#d8f2e4",
+        name: feature.properties.name,
+      };
+    }),
+    [selectedProvinceKey],
+  );
+
   const focusedBounds = useMemo(() => {
     if (selectedRegion?.danhSachTinh?.length) {
       return getBoundsForProvinceNames(selectedRegion.danhSachTinh);
     }
 
     if (selectedProvinceName) {
-      return getBoundsForProvinceNames([selectedProvinceName]);
+      return getBoundsForProvinceNames([selectedProvinceName]) ||
+        getBoundsForProvinceNames([selectedProvinceName], VIETNAM_ARCHIPELAGO_GEOJSON);
     }
 
     return null;
@@ -192,14 +212,37 @@ function VietnamEconomicMap({
       return undefined;
     }
 
+    const container = containerRef.current;
+
+    function handleArchipelagoClick(event) {
+      const pointElement = event.target.closest?.(
+        ".highcharts-series-1 .highcharts-point",
+      );
+
+      if (!pointElement) {
+        return;
+      }
+
+      const selectedFeature = VIETNAM_ARCHIPELAGO_GEOJSON.features.find((feature) =>
+        pointElement.classList.contains(`highcharts-key-${feature.properties["hc-key"]}`),
+      );
+
+      if (selectedFeature) {
+        onProvinceClickRef.current?.({ name: selectedFeature.properties.name });
+      }
+    }
+
+    container.addEventListener("click", handleArchipelagoClick);
+
     const chart = Highcharts.mapChart(
-      containerRef.current,
+      container,
       buildChartOptions(onProvinceClickRef),
     );
 
     chartRef.current = chart;
 
     return () => {
+      container.removeEventListener("click", handleArchipelagoClick);
       chart.destroy();
       chartRef.current = null;
     };
@@ -213,6 +256,7 @@ function VietnamEconomicMap({
     }
 
     chart.series[0].setData(mapData, false, false, false);
+    chart.series[1].setData(archipelagoData, false, false, false);
 
     if (chart.mapView) {
       const nextBounds = focusedBounds || chart.series[2]?.bounds;
@@ -228,7 +272,7 @@ function VietnamEconomicMap({
     }
 
     chart.redraw();
-  }, [focusedBounds, mapData]);
+  }, [archipelagoData, focusedBounds, mapData]);
 
   return <div ref={containerRef} className="economic-map-chart" />;
 }

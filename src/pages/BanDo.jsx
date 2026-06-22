@@ -5,7 +5,7 @@ import VietnamEconomicMap from "../components/VietnamEconomicMap";
 import { supabase } from "../lib/supabaseClient";
 import {
   DEFAULT_ECONOMIC_REGIONS,
-  VIETNAM_34_PROVINCES,
+  VIETNAM_ADMINISTRATIVE_UNITS,
   getProvince34Name,
   getProvinceMetaByName,
   getRegionColor,
@@ -152,7 +152,7 @@ function BanDo() {
   }, [provinceRegionLookup, regions, selectedProvinceName, selectedRegionId]);
 
   const searchOptions = useMemo(() => {
-    const provinceOptions = VIETNAM_34_PROVINCES.map((province) => ({
+    const provinceOptions = VIETNAM_ADMINISTRATIVE_UNITS.map((province) => ({
       label: province.name,
       type: "province",
       value: province.name,
@@ -212,7 +212,7 @@ function BanDo() {
       return;
     }
 
-    const matchedProvince = VIETNAM_34_PROVINCES.find((province) =>
+    const matchedProvince = VIETNAM_ADMINISTRATIVE_UNITS.find((province) =>
       normalizeVietnamName(province.name).includes(normalizedQuery),
     );
 
@@ -242,11 +242,11 @@ function BanDo() {
 
       <section className="map-hero">
         <p className="map-eyebrow">Bản đồ tương tác</p>
-        <h1>Bản đồ Việt Nam 34 tỉnh, thành phố</h1>
+        <h1>Bản đồ Việt Nam 34 tỉnh, thành phố và 2 đặc khu</h1>
         <p>
-          Click trực tiếp vào tỉnh/thành để xem tỉnh đó đang thuộc vùng kinh tế nào,
-          đồng thời đọc nhanh các thông tin vùng do admin quản lý. Hoàng Sa và Trường Sa
-          được hiển thị theo dữ liệu đường bờ và rạn san hô thực tế.
+          Click trực tiếp vào tỉnh/thành hoặc đặc khu để mở thông tin tương ứng,
+          đồng thời đọc nhanh các thông tin vùng do admin quản lý. Đặc khu Hoàng Sa và Đặc khu
+          Trường Sa được hiển thị theo dữ liệu đường bờ và rạn san hô thực tế.
         </p>
       </section>
 
@@ -267,8 +267,8 @@ function BanDo() {
         <div className="map-canvas-card">
           <div className="map-card-header">
             <div>
-              <h2>Bản đồ hành chính 34 tỉnh/thành</h2>
-              <p>Chọn trực tiếp trên bản đồ hoặc tìm nhanh theo tên tỉnh/thành, tên vùng.</p>
+              <h2>Bản đồ hành chính 34 tỉnh/thành và 2 đặc khu</h2>
+              <p>Chọn trực tiếp trên bản đồ hoặc tìm nhanh theo tên tỉnh/thành, đặc khu, tên vùng.</p>
             </div>
 
             <form className="map-search-form" onSubmit={handleSearchSubmit}>
@@ -277,7 +277,7 @@ function BanDo() {
                 list="map-search-options"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Ví dụ: Hà Nội, Đồng Nai, Đồng bằng sông Hồng..."
+                placeholder="Ví dụ: Hà Nội, Đặc khu Hoàng Sa, Đồng bằng sông Hồng..."
               />
               <button type="submit">Tìm nhanh</button>
               <datalist id="map-search-options">
@@ -300,7 +300,7 @@ function BanDo() {
           <aside className="map-detail-card">
             <div className="map-detail-topbar">
               <div className="map-detail-header">
-                <p>Tỉnh/thành đang chọn</p>
+                <p>Đơn vị hành chính đang chọn</p>
                 <h2>{selectedProvinceName}</h2>
               </div>
 
@@ -373,6 +373,17 @@ function BanDo() {
                       </button>
                     ))}
                   </div>
+                </div>
+              </>
+            ) : selectedProvinceMeta?.type === "special-zone" ? (
+              <>
+                <div className="map-region-badge">Đặc khu</div>
+                <p className="map-detail-description">
+                  {selectedProvinceMeta.description}
+                </p>
+                <div className="map-detail-section">
+                  <h3>Đơn vị trực thuộc</h3>
+                  <p>{selectedProvinceMeta.administrativeParent}</p>
                 </div>
               </>
             ) : (

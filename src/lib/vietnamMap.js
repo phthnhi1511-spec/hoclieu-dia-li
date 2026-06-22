@@ -42,6 +42,32 @@ export const VIETNAM_34_PROVINCES = [
   { name: "Cà Mau", slug: "ca-mau", mergedFrom: ["Cà Mau", "Bạc Liêu"] },
 ];
 
+export const VIETNAM_SPECIAL_ZONES = [
+  {
+    administrativeParent: "Thành phố Đà Nẵng",
+    aliases: ["Hoàng Sa", "Quần đảo Hoàng Sa", "Huyện đảo Hoàng Sa"],
+    description: "Đơn vị hành chính đặc khu trên biển trực thuộc thành phố Đà Nẵng.",
+    mapKey: "vn-hoang-sa",
+    name: "Đặc khu Hoàng Sa",
+    slug: "dac-khu-hoang-sa",
+    type: "special-zone",
+  },
+  {
+    administrativeParent: "Tỉnh Khánh Hòa",
+    aliases: ["Trường Sa", "Quần đảo Trường Sa", "Huyện đảo Trường Sa"],
+    description: "Đơn vị hành chính đặc khu trên biển trực thuộc tỉnh Khánh Hòa.",
+    mapKey: "vn-truong-sa",
+    name: "Đặc khu Trường Sa",
+    slug: "dac-khu-truong-sa",
+    type: "special-zone",
+  },
+];
+
+export const VIETNAM_ADMINISTRATIVE_UNITS = [
+  ...VIETNAM_34_PROVINCES,
+  ...VIETNAM_SPECIAL_ZONES,
+];
+
 export const VIETNAM_ARCHIPELAGO_GEOJSON = vietnamArchipelagoGeoJson;
 
 export const VIETNAM_MAP_EXTENT_GEOJSON = {
@@ -197,11 +223,14 @@ export const DEFAULT_ECONOMIC_REGIONS = [
 ];
 
 const provinceMetaByName = new Map(
-  VIETNAM_34_PROVINCES.map((province, index) => [province.name, { ...province, order: index }]),
+  VIETNAM_ADMINISTRATIVE_UNITS.map((province, index) => [
+    province.name,
+    { ...province, order: index },
+  ]),
 );
 
-const provinceAliasLookup = VIETNAM_34_PROVINCES.reduce((lookup, province) => {
-  [province.name, ...(province.mergedFrom || [])].forEach((alias) => {
+const provinceAliasLookup = VIETNAM_ADMINISTRATIVE_UNITS.reduce((lookup, province) => {
+  [province.name, ...(province.mergedFrom || []), ...(province.aliases || [])].forEach((alias) => {
     lookup[normalizeVietnamName(alias)] = province.name;
   });
 
@@ -241,7 +270,9 @@ export function getProvince34Name(value) {
 
   return (
     provinceAliasLookup[normalized] ||
-    VIETNAM_34_PROVINCES.find((province) => normalizeVietnamName(province.name) === normalized)?.name ||
+    VIETNAM_ADMINISTRATIVE_UNITS.find(
+      (province) => normalizeVietnamName(province.name) === normalized,
+    )?.name ||
     ""
   );
 }
