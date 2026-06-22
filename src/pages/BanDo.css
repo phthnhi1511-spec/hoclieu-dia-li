@@ -188,6 +188,30 @@
   overflow: hidden;
 }
 
+.economic-map-chart .is-special-zone-selected {
+  animation: special-zone-pulse 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 5px rgb(245 158 11 / 75%));
+}
+
+@keyframes special-zone-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgb(245 158 11 / 55%));
+    opacity: 1;
+  }
+
+  50% {
+    filter: drop-shadow(0 0 9px rgb(245 158 11 / 95%));
+    opacity: 0.82;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .economic-map-chart .is-special-zone-selected {
+    animation: none;
+  }
+}
+
 .map-detail-card {
   min-height: 720px;
 }

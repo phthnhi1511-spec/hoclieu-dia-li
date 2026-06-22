@@ -136,6 +136,10 @@ function BanDo() {
   );
 
   const selectedRegion = useMemo(() => {
+    if (selectedProvinceMeta?.type === "special-zone") {
+      return null;
+    }
+
     if (selectedProvinceName) {
       const regionFromProvince = provinceRegionLookup.get(normalizeVietnamName(selectedProvinceName));
 
@@ -149,7 +153,7 @@ function BanDo() {
     }
 
     return regions.find((region) => String(region.id) === String(selectedRegionId)) || null;
-  }, [provinceRegionLookup, regions, selectedProvinceName, selectedRegionId]);
+  }, [provinceRegionLookup, regions, selectedProvinceMeta, selectedProvinceName, selectedRegionId]);
 
   const searchOptions = useMemo(() => {
     const provinceOptions = VIETNAM_ADMINISTRATIVE_UNITS.map((province) => ({
@@ -180,6 +184,14 @@ function BanDo() {
 
   function handleProvinceClick(point) {
     const provinceName = getProvince34Name(point?.name) || point?.name || "";
+    const provinceMeta = getProvinceMetaByName(provinceName);
+
+    if (provinceMeta?.type === "special-zone") {
+      setSelectedProvinceName(provinceName);
+      setSelectedRegionId("");
+      return;
+    }
+
     const provinceRegion = provinceRegionLookup.get(normalizeVietnamName(provinceName));
 
     setSelectedProvinceName(provinceName);

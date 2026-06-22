@@ -185,9 +185,10 @@ function VietnamEconomicMap({
 
       return {
         "hc-key": feature.properties["hc-key"],
-        borderColor: isSelected ? "#0f440f" : "#0f8f58",
-        borderWidth: isSelected ? 2.4 : 1.2,
-        color: isSelected ? "#71d59f" : "#d8f2e4",
+        borderColor: isSelected ? "#ffffff" : "#0f8f58",
+        borderWidth: 1.2,
+        className: isSelected ? "is-special-zone-selected" : "",
+        color: isSelected ? "#f59e0b" : "#d8f2e4",
         name: feature.properties.name,
       };
     }),
@@ -195,13 +196,23 @@ function VietnamEconomicMap({
   );
 
   const focusedBounds = useMemo(() => {
+    if (selectedProvinceName) {
+      const archipelagoBounds = getBoundsForProvinceNames(
+        [selectedProvinceName],
+        VIETNAM_ARCHIPELAGO_GEOJSON,
+      );
+
+      if (archipelagoBounds) {
+        return archipelagoBounds;
+      }
+    }
+
     if (selectedRegion?.danhSachTinh?.length) {
       return getBoundsForProvinceNames(selectedRegion.danhSachTinh);
     }
 
     if (selectedProvinceName) {
-      return getBoundsForProvinceNames([selectedProvinceName]) ||
-        getBoundsForProvinceNames([selectedProvinceName], VIETNAM_ARCHIPELAGO_GEOJSON);
+      return getBoundsForProvinceNames([selectedProvinceName]);
     }
 
     return null;
