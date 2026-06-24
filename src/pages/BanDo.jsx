@@ -254,7 +254,7 @@ function BanDo() {
 
       <section className="map-hero">
         <p className="map-eyebrow">Bản đồ tương tác</p>
-        <h1>Bản đồ Việt Nam 34 tỉnh, thành phố và 2 đặc khu</h1>
+        <h1>Bản đồ Việt Nam 34 tỉnh, thành phố và 13 đặc khu</h1>
         <p>
           Click trực tiếp vào tỉnh/thành hoặc đặc khu để mở thông tin tương ứng,
           đồng thời đọc nhanh các thông tin vùng do admin quản lý. Đặc khu Hoàng Sa và Đặc khu
