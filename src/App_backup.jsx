@@ -1,5 +1,3 @@
-import { Routes, Route } from "react-router-dom";
-import NongNghiep from "./pages/NongNghiep";
 function App() {
   return (
     <div>

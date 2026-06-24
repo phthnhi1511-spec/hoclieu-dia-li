@@ -328,14 +328,6 @@ function LuyenTap() {
     gameWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
   );
 
-  useEffect(() => {
-    setQuizWindow(0);
-  }, [currentPageSafe, deferredSearchText, selectedTopicId]);
-
-  useEffect(() => {
-    setGameWindow(0);
-  }, [currentGamePageSafe]);
-
   return (
     <div className="collection-page">
       <Header />
@@ -404,7 +396,10 @@ function LuyenTap() {
                   ariaLabel="Phân trang trò chơi học tập"
                   currentPage={currentGamePageSafe}
                   totalPages={totalGamePages}
-                  onPageChange={setCurrentGamePage}
+                  onPageChange={(nextPage) => {
+                    setCurrentGamePage(nextPage);
+                    setGameWindow(0);
+                  }}
                 />
               </section>
 
@@ -417,6 +412,7 @@ function LuyenTap() {
                     onChange={(event) => {
                       setSearchText(event.target.value);
                       setCurrentPage(1);
+                      setQuizWindow(0);
                     }}
                     placeholder="Nhập tiêu đề, mô tả hoặc chủ đề"
                   />
@@ -429,6 +425,7 @@ function LuyenTap() {
                     onChange={(event) => {
                       setSelectedTopicId(event.target.value);
                       setCurrentPage(1);
+                      setQuizWindow(0);
                     }}
                   >
                     <option value="tat-ca">Tất cả chủ đề</option>
@@ -466,7 +463,10 @@ function LuyenTap() {
                     ariaLabel="Phân trang bài kiểm tra"
                     currentPage={currentPageSafe}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={(nextPage) => {
+                      setCurrentPage(nextPage);
+                      setQuizWindow(0);
+                    }}
                   />
                 </>
               )}

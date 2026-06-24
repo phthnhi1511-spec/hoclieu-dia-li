@@ -230,10 +230,6 @@ function KhaoSat() {
     currentWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
   );
 
-  useEffect(() => {
-    setCurrentWindow(0);
-  }, [currentPageSafe, deferredSearchText, selectedAudience]);
-
   return (
     <div className="collection-page">
       <Header />
@@ -288,6 +284,7 @@ function KhaoSat() {
                     onChange={(event) => {
                       setSearchText(event.target.value);
                       setCurrentPage(1);
+                      setCurrentWindow(0);
                     }}
                     placeholder="Nhập tiêu đề, mô tả hoặc đối tượng khảo sát"
                   />
@@ -300,6 +297,7 @@ function KhaoSat() {
                     onChange={(event) => {
                       setSelectedAudience(event.target.value);
                       setCurrentPage(1);
+                      setCurrentWindow(0);
                     }}
                   >
                     <option value="tat-ca">Tất cả đối tượng</option>
@@ -333,7 +331,14 @@ function KhaoSat() {
                     label="khảo sát"
                   />
 
-                  <Pagination currentPage={currentPageSafe} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  <Pagination
+                    currentPage={currentPageSafe}
+                    totalPages={totalPages}
+                    onPageChange={(nextPage) => {
+                      setCurrentPage(nextPage);
+                      setCurrentWindow(0);
+                    }}
+                  />
                 </>
               )}
             </>

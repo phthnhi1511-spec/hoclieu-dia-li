@@ -1,13 +1,15 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import CollectionWindowControls from "../components/CollectionWindowControls";
 import Header from "../components/Header";
 import { formatPublishDate, normalizeExternalUrl } from "../lib/libraryUtils";
 import { buildR2FileUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
-const NEWS_PER_PAGE = 6;
-const SKELETON_CARD_COUNT = 6;
+const NEWS_PER_PAGE = 10;
+const ITEMS_PER_WINDOW = 3;
+const SKELETON_CARD_COUNT = 3;
 
 function NewsCard({ news, topicName, onOpen }) {
   const imageUrl = news.duong_dan_anh_dai_dien ? buildR2FileUrl(news.duong_dan_anh_dai_dien) : "";
@@ -163,6 +165,7 @@ function ThuVienTinTuc() {
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentWindow, setCurrentWindow] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeExternalNews, setActiveExternalNews] = useState(null);
@@ -246,6 +249,12 @@ function ThuVienTinTuc() {
     (currentPageSafe - 1) * NEWS_PER_PAGE,
     currentPageSafe * NEWS_PER_PAGE,
   );
+  const totalWindows = Math.max(1, Math.ceil(paginatedNews.length / ITEMS_PER_WINDOW));
+  const currentWindowSafe = Math.min(currentWindow, totalWindows - 1);
+  const visibleNews = paginatedNews.slice(
+    currentWindowSafe * ITEMS_PER_WINDOW,
+    currentWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
+  );
 
   return (
     <div className="collection-page">
@@ -286,7 +295,7 @@ function ThuVienTinTuc() {
           {loading ? (
             <>
               <ControlsSkeleton />
-              <section className="collection-grid">
+              <section className="collection-grid collection-window-grid">
                 {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
                   <CollectionCardSkeleton key={index} />
                 ))}
@@ -303,6 +312,7 @@ function ThuVienTinTuc() {
                     onChange={(event) => {
                       setSearchText(event.target.value);
                       setCurrentPage(1);
+                      setCurrentWindow(0);
                     }}
                     placeholder="Nhập tiêu đề, tóm tắt, nguồn hoặc chủ đề"
                   />
@@ -315,6 +325,7 @@ function ThuVienTinTuc() {
                     onChange={(event) => {
                       setSelectedTopicId(event.target.value);
                       setCurrentPage(1);
+                      setCurrentWindow(0);
                     }}
                   >
                     <option value="tat-ca">Tất cả chủ đề</option>
@@ -335,8 +346,8 @@ function ThuVienTinTuc() {
                 </section>
               ) : (
                 <>
-                  <section className="collection-grid">
-                    {paginatedNews.map((news) => (
+                  <section className="collection-grid collection-window-grid">
+                    {visibleNews.map((news) => (
                       <NewsCard
                         key={news.id}
                         news={news}
@@ -346,7 +357,21 @@ function ThuVienTinTuc() {
                     ))}
                   </section>
 
-                  <Pagination currentPage={currentPageSafe} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  <CollectionWindowControls
+                    currentWindow={currentWindowSafe}
+                    totalWindows={totalWindows}
+                    onWindowChange={setCurrentWindow}
+                    label="tin tức tư liệu"
+                  />
+
+                  <Pagination
+                    currentPage={currentPageSafe}
+                    totalPages={totalPages}
+                    onPageChange={(nextPage) => {
+                      setCurrentPage(nextPage);
+                      setCurrentWindow(0);
+                    }}
+                  />
                 </>
               )}
             </>

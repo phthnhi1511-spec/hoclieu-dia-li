@@ -1,13 +1,15 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import CollectionWindowControls from "../components/CollectionWindowControls";
 import Header from "../components/Header";
 import { getExamKindLabel, getExamThumbnailUrl } from "../lib/libraryUtils";
 import { buildR2ProxyFileUrl, getR2DownloadUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
-const EXAMS_PER_PAGE = 6;
-const SKELETON_CARD_COUNT = 6;
+const EXAMS_PER_PAGE = 10;
+const ITEMS_PER_WINDOW = 3;
+const SKELETON_CARD_COUNT = 3;
 
 function ExamCard({ exam, topicName }) {
   const thumbnailUrl = getExamThumbnailUrl(exam);
@@ -159,6 +161,7 @@ function ThuVienDeThi() {
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentWindow, setCurrentWindow] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const deferredSearchText = useDeferredValue(searchText);
@@ -244,6 +247,12 @@ function ThuVienDeThi() {
     (currentPageSafe - 1) * EXAMS_PER_PAGE,
     currentPageSafe * EXAMS_PER_PAGE,
   );
+  const totalWindows = Math.max(1, Math.ceil(paginatedExams.length / ITEMS_PER_WINDOW));
+  const currentWindowSafe = Math.min(currentWindow, totalWindows - 1);
+  const visibleExams = paginatedExams.slice(
+    currentWindowSafe * ITEMS_PER_WINDOW,
+    currentWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
+  );
 
   return (
     <div className="collection-page">
@@ -284,7 +293,7 @@ function ThuVienDeThi() {
           {loading ? (
             <>
               <ControlsSkeleton />
-              <section className="collection-grid">
+              <section className="collection-grid collection-window-grid">
                 {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
                   <CollectionCardSkeleton key={index} />
                 ))}
@@ -301,6 +310,7 @@ function ThuVienDeThi() {
                     onChange={(event) => {
                       setSearchText(event.target.value);
                       setCurrentPage(1);
+                      setCurrentWindow(0);
                     }}
                     placeholder="Nhập tiêu đề, mô tả hoặc chủ đề"
                   />
@@ -313,6 +323,7 @@ function ThuVienDeThi() {
                     onChange={(event) => {
                       setSelectedTopicId(event.target.value);
                       setCurrentPage(1);
+                      setCurrentWindow(0);
                     }}
                   >
                     <option value="tat-ca">Tất cả chủ đề</option>
@@ -333,13 +344,27 @@ function ThuVienDeThi() {
                 </section>
               ) : (
                 <>
-                  <section className="collection-grid">
-                    {paginatedExams.map((exam) => (
+                  <section className="collection-grid collection-window-grid">
+                    {visibleExams.map((exam) => (
                       <ExamCard key={exam.id} exam={exam} topicName={topicNameById.get(exam.chu_de_id) || ""} />
                     ))}
                   </section>
 
-                  <Pagination currentPage={currentPageSafe} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  <CollectionWindowControls
+                    currentWindow={currentWindowSafe}
+                    totalWindows={totalWindows}
+                    onWindowChange={setCurrentWindow}
+                    label="đề thi"
+                  />
+
+                  <Pagination
+                    currentPage={currentPageSafe}
+                    totalPages={totalPages}
+                    onPageChange={(nextPage) => {
+                      setCurrentPage(nextPage);
+                      setCurrentWindow(0);
+                    }}
+                  />
                 </>
               )}
             </>
