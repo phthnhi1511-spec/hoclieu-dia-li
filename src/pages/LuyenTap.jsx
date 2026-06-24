@@ -1,12 +1,15 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import CollectionWindowControls from "../components/CollectionWindowControls";
 import Header from "../components/Header";
 import { buildR2FileUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
-const ITEMS_PER_PAGE = 6;
-const QUIZ_SKELETON_COUNT = 6;
+const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_WINDOW = 3;
+const QUIZ_SKELETON_COUNT = 3;
+const GAME_ITEMS_PER_PAGE = 10;
 const fallbackLearningGames = [
   {
     icon: "🧩",
@@ -59,13 +62,15 @@ function QuizCard({ quiz }) {
 function LearningGameCard({ game }) {
   return (
     <article className="learning-game-card">
-      {game.imageUrl ? (
-        <img className="learning-game-image" src={game.imageUrl} alt={game.name} />
-      ) : (
-        <div className="learning-game-icon" aria-hidden="true">
-          {game.icon}
-        </div>
-      )}
+      <div className="learning-game-media">
+        {game.imageUrl ? (
+          <img className="learning-game-image" src={game.imageUrl} alt={game.name} />
+        ) : (
+          <div className="learning-game-icon" aria-hidden="true">
+            {game.icon}
+          </div>
+        )}
+      </div>
       <div className="learning-game-body">
         <h3>{game.name}</h3>
         <p>{game.description}</p>
@@ -116,15 +121,26 @@ function ControlsSkeleton() {
   );
 }
 
-function Pagination({ currentPage, totalPages, onPageChange }) {
+function Pagination({ ariaLabel = "Pagination", currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
 
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const arrowIcon = (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M9.5 5.5 16 12l-6.5 6.5" />
+    </svg>
+  );
 
   return (
-    <nav className="collection-pagination" aria-label="Phân trang bài kiểm tra">
-      <button type="button" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
-        Trang trước
+    <nav className="collection-pagination" aria-label={ariaLabel}>
+      <button
+        type="button"
+        className="collection-pagination-arrow collection-pagination-prev"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        {arrowIcon}
+        <span>Trang trước</span>
       </button>
 
       <div className="collection-pagination-pages">
@@ -140,8 +156,14 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         ))}
       </div>
 
-      <button type="button" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-        Trang sau
+      <button
+        type="button"
+        className="collection-pagination-arrow collection-pagination-next"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        <span>Trang sau</span>
+        {arrowIcon}
       </button>
     </nav>
   );
@@ -154,6 +176,9 @@ function LuyenTap() {
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentGamePage, setCurrentGamePage] = useState(1);
+  const [quizWindow, setQuizWindow] = useState(0);
+  const [gameWindow, setGameWindow] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const deferredSearchText = useDeferredValue(searchText);
@@ -284,6 +309,32 @@ function LuyenTap() {
     (currentPageSafe - 1) * ITEMS_PER_PAGE,
     currentPageSafe * ITEMS_PER_PAGE,
   );
+  const totalQuizWindows = Math.max(1, Math.ceil(paginatedQuizzes.length / ITEMS_PER_WINDOW));
+  const quizWindowSafe = Math.min(quizWindow, totalQuizWindows - 1);
+  const visibleQuizzes = paginatedQuizzes.slice(
+    quizWindowSafe * ITEMS_PER_WINDOW,
+    quizWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
+  );
+  const totalGamePages = Math.max(1, Math.ceil(learningGames.length / GAME_ITEMS_PER_PAGE));
+  const currentGamePageSafe = Math.min(currentGamePage, totalGamePages);
+  const paginatedLearningGames = learningGames.slice(
+    (currentGamePageSafe - 1) * GAME_ITEMS_PER_PAGE,
+    currentGamePageSafe * GAME_ITEMS_PER_PAGE,
+  );
+  const totalGameWindows = Math.max(1, Math.ceil(paginatedLearningGames.length / ITEMS_PER_WINDOW));
+  const gameWindowSafe = Math.min(gameWindow, totalGameWindows - 1);
+  const visibleLearningGames = paginatedLearningGames.slice(
+    gameWindowSafe * ITEMS_PER_WINDOW,
+    gameWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
+  );
+
+  useEffect(() => {
+    setQuizWindow(0);
+  }, [currentPageSafe, deferredSearchText, selectedTopicId]);
+
+  useEffect(() => {
+    setGameWindow(0);
+  }, [currentGamePageSafe]);
 
   return (
     <div className="collection-page">
@@ -322,7 +373,7 @@ function LuyenTap() {
           {loading ? (
             <>
               <ControlsSkeleton />
-              <section className="collection-grid">
+              <section className="collection-grid quiz-collection-grid">
                 {Array.from({ length: QUIZ_SKELETON_COUNT }, (_, index) => (
                   <CollectionCardSkeleton key={index} />
                 ))}
@@ -337,10 +388,24 @@ function LuyenTap() {
                 </div>
 
                 <div className="learning-games-grid">
-                  {learningGames.map((game) => (
+                  {visibleLearningGames.map((game) => (
                     <LearningGameCard key={game.name} game={game} />
                   ))}
                 </div>
+
+                <CollectionWindowControls
+                  currentWindow={gameWindowSafe}
+                  totalWindows={totalGameWindows}
+                  onWindowChange={setGameWindow}
+                  label="trò chơi học tập"
+                />
+
+                <Pagination
+                  ariaLabel="Phân trang trò chơi học tập"
+                  currentPage={currentGamePageSafe}
+                  totalPages={totalGamePages}
+                  onPageChange={setCurrentGamePage}
+                />
               </section>
 
               <section className="collection-controls">
@@ -384,13 +449,25 @@ function LuyenTap() {
                 </section>
               ) : (
                 <>
-                  <section className="collection-grid">
-                    {paginatedQuizzes.map((quiz) => (
+                  <section className="collection-grid quiz-collection-grid">
+                    {visibleQuizzes.map((quiz) => (
                       <QuizCard key={quiz.id} quiz={quiz} />
                     ))}
                   </section>
 
-                  <Pagination currentPage={currentPageSafe} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  <CollectionWindowControls
+                    currentWindow={quizWindowSafe}
+                    totalWindows={totalQuizWindows}
+                    onWindowChange={setQuizWindow}
+                    label="bài kiểm tra"
+                  />
+
+                  <Pagination
+                    ariaLabel="Phân trang bài kiểm tra"
+                    currentPage={currentPageSafe}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
                 </>
               )}
             </>

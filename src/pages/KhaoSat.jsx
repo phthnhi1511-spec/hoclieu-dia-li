@@ -1,12 +1,14 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import CollectionWindowControls from "../components/CollectionWindowControls";
 import Header from "../components/Header";
 import { normalizeExternalUrl } from "../lib/libraryUtils";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
-const SURVEYS_PER_PAGE = 6;
-const SURVEY_SKELETON_COUNT = 6;
+const SURVEYS_PER_PAGE = 10;
+const ITEMS_PER_WINDOW = 3;
+const SURVEY_SKELETON_COUNT = 3;
 
 function SurveyCard({ survey, onOpen }) {
   return (
@@ -145,6 +147,7 @@ function KhaoSat() {
   const [searchText, setSearchText] = useState("");
   const [selectedAudience, setSelectedAudience] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentWindow, setCurrentWindow] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeSurvey, setActiveSurvey] = useState(null);
@@ -220,6 +223,16 @@ function KhaoSat() {
     (currentPageSafe - 1) * SURVEYS_PER_PAGE,
     currentPageSafe * SURVEYS_PER_PAGE,
   );
+  const totalWindows = Math.max(1, Math.ceil(paginatedSurveys.length / ITEMS_PER_WINDOW));
+  const currentWindowSafe = Math.min(currentWindow, totalWindows - 1);
+  const visibleSurveys = paginatedSurveys.slice(
+    currentWindowSafe * ITEMS_PER_WINDOW,
+    currentWindowSafe * ITEMS_PER_WINDOW + ITEMS_PER_WINDOW,
+  );
+
+  useEffect(() => {
+    setCurrentWindow(0);
+  }, [currentPageSafe, deferredSearchText, selectedAudience]);
 
   return (
     <div className="collection-page">
@@ -258,7 +271,7 @@ function KhaoSat() {
           {loading ? (
             <>
               <ControlsSkeleton />
-              <section className="collection-grid">
+              <section className="collection-grid collection-window-grid">
                 {Array.from({ length: SURVEY_SKELETON_COUNT }, (_, index) => (
                   <CollectionCardSkeleton key={index} />
                 ))}
@@ -307,11 +320,18 @@ function KhaoSat() {
                 </section>
               ) : (
                 <>
-                  <section className="collection-grid">
-                    {paginatedSurveys.map((survey) => (
+                  <section className="collection-grid collection-window-grid">
+                    {visibleSurveys.map((survey) => (
                       <SurveyCard key={survey.id} survey={survey} onOpen={setActiveSurvey} />
                     ))}
                   </section>
+
+                  <CollectionWindowControls
+                    currentWindow={currentWindowSafe}
+                    totalWindows={totalWindows}
+                    onWindowChange={setCurrentWindow}
+                    label="khảo sát"
+                  />
 
                   <Pagination currentPage={currentPageSafe} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </>

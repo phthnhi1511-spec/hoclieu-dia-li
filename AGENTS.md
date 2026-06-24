@@ -50,6 +50,12 @@ The current project is no longer using a minimal generic schema. When working on
   * Important fields currently used by the app: `tieu_de`, `mo_ta`, `chu_de_id`, `duong_dan_file`, `duong_dan_anh_dai_dien`, `ten_nguon`, `da_xuat_ban`.
   * Supports image, PDF, or Word exam files uploaded to Cloudflare R2.
 
+* `tin_tuc_tu_lieu`
+
+  * Separate from `hoc_lieu` and used by the library news/resources page and admin CRUD.
+  * Important fields currently used by the app: `tieu_de`, `duong_dan`, `tom_tat`, `noi_dung`, `chu_de_id`, `duong_dan_anh_dai_dien`, `ten_nguon`, `duong_dan_nguon`, `ngay_xuat_ban`, `da_xuat_ban`.
+  * News links are external resources; public UI should confirm before navigating outside the website.
+
 * `bai_kiem_tra`
 
   * Quiz/test master table.
@@ -75,6 +81,12 @@ The current project is no longer using a minimal generic schema. When working on
 
   * Stores per-question answer detail for a quiz attempt.
   * Important fields currently used by the app include `ket_qua_id`, `cau_hoi_id`, `dap_an_da_chon_id`, and `la_dap_an_dung`.
+
+* `tro_choi_hoc_tap`
+
+  * Used by the public practice page game section and admin CRUD.
+  * Important fields currently used by the app: `ten_tro_choi`, `mo_ta`, `duong_dan`, `chu_de`, `hinh_dai_dien_url`, `thu_tu_hien_thi`, `da_xuat_ban`.
+  * `hinh_dai_dien_url` stores an R2 object key or image URL; `duong_dan` stores the external game URL.
 
 * `khao_sat`
 
