@@ -279,7 +279,7 @@ function BanDo() {
         <div className="map-canvas-card">
           <div className="map-card-header">
             <div>
-              <h2>Bản đồ hành chính 34 tỉnh/thành và 2 đặc khu</h2>
+              <h2>Bản đồ hành chính 34 tỉnh/thành và 13 đặc khu</h2>
               <p>Chọn trực tiếp trên bản đồ hoặc tìm nhanh theo tên tỉnh/thành, đặc khu, tên vùng.</p>
             </div>
 
