@@ -3,6 +3,13 @@ import { HOME_CONFIG_KEY_OPTIONS, HOME_SECTION_OPTIONS } from "./lib/homePageCon
 
 const commonStatusFields = [{ name: "da_xuat_ban", label: "Đã xuất bản", type: "boolean" }];
 
+const GAME_TOPIC_OPTIONS = [
+  { label: "Nông nghiệp", value: "Nông nghiệp" },
+  { label: "Công nghiệp", value: "Công nghiệp" },
+  { label: "Dịch vụ", value: "Dịch vụ" },
+  { label: "Lâm nghiệp & Thủy sản", value: "Lâm nghiệp & Thủy sản" },
+];
+
 const references = {
   baiKiemTra: {
     entityLabel: "bài kiểm tra",
@@ -143,6 +150,35 @@ export const adminTables = [
     fields: [],
     label: "Kết quả kiểm tra - Chi tiết",
     name: "quiz_results_manager",
+  },
+  {
+    fields: [
+      { name: "ten_tro_choi", label: "Tên trò chơi", required: true },
+      { name: "mo_ta", label: "Mô tả ngắn", type: "textarea" },
+      { name: "duong_dan", label: "Link trò chơi", required: true },
+      {
+        name: "chu_de",
+        label: "Chủ đề",
+        options: GAME_TOPIC_OPTIONS,
+        required: true,
+        type: "select",
+      },
+      {
+        name: "hinh_dai_dien_url",
+        label: "Hình đại diện",
+        upload: {
+          accept: ".png,.jpg,.jpeg,.webp",
+          functionName: "r2-presign-upload",
+          helperText:
+            "Có thể tải ảnh đại diện lên Cloudflare R2 hoặc dán URL ảnh trực tiếp. Trường này không bắt buộc.",
+          provider: "cloudflare-r2",
+        },
+      },
+      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
+      { name: "da_xuat_ban", label: "Đang hiển thị", defaultValue: true, type: "boolean" },
+    ],
+    label: "QUẢN LÝ TRÒ CHƠI HỌC TẬP",
+    name: "tro_choi_hoc_tap",
   },
   {
     fields: [

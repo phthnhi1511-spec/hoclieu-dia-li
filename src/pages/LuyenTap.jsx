@@ -1,11 +1,32 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import { buildR2FileUrl } from "../lib/r2";
 import { supabase } from "../lib/supabaseClient";
 import "./PublicCollection.css";
 
 const ITEMS_PER_PAGE = 6;
 const QUIZ_SKELETON_COUNT = 6;
+const fallbackLearningGames = [
+  {
+    icon: "🧩",
+    name: "Ô chữ Địa lí kinh tế",
+    description: "Củng cố khái niệm, ngành kinh tế và vùng kinh tế qua trò chơi ô chữ.",
+    url: "https://wordwall.net/vi-vn/community/%C4%91%E1%BB%8Ba-l%C3%AD-9",
+  },
+  {
+    icon: "⚡",
+    name: "Đố vui nhanh",
+    description: "Luyện phản xạ với các câu hỏi ngắn về Địa lí Việt Nam lớp 9.",
+    url: "https://quizizz.com/admin/search/%C4%91%E1%BB%8Ba%20l%C3%AD%209",
+  },
+  {
+    icon: "🗺️",
+    name: "Ghép cặp bản đồ",
+    description: "Nhận diện địa danh, vùng kinh tế và kiến thức bản đồ bằng hoạt động tương tác.",
+    url: "https://learningapps.org/index.php?category=89&s=%C4%91%E1%BB%8Ba+l%C3%AD+9",
+  },
+];
 
 function QuizCard({ quiz }) {
   return (
@@ -31,6 +52,28 @@ function QuizCard({ quiz }) {
           </Link>
         </div>
       </div>
+    </article>
+  );
+}
+
+function LearningGameCard({ game }) {
+  return (
+    <article className="learning-game-card">
+      {game.imageUrl ? (
+        <img className="learning-game-image" src={game.imageUrl} alt={game.name} />
+      ) : (
+        <div className="learning-game-icon" aria-hidden="true">
+          {game.icon}
+        </div>
+      )}
+      <div className="learning-game-body">
+        <h3>{game.name}</h3>
+        <p>{game.description}</p>
+        {game.topic ? <span className="learning-game-topic">{game.topic}</span> : null}
+      </div>
+      <a className="learning-game-action" href={game.url} target="_blank" rel="noreferrer">
+        Chơi ngay
+      </a>
     </article>
   );
 }
@@ -107,6 +150,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
 function LuyenTap() {
   const [topics, setTopics] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
+  const [learningGames, setLearningGames] = useState(fallbackLearningGames);
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,6 +168,7 @@ function LuyenTap() {
       const [
         { data: topicsData, error: topicsError },
         { data: quizData, error: quizError },
+        { data: gameData, error: gameError },
       ] = await Promise.all([
         supabase
           .from("chu_de")
@@ -134,6 +179,12 @@ function LuyenTap() {
           .from("bai_kiem_tra")
           .select("id, tieu_de, mo_ta, chu_de_id, thoi_gian_lam_bai_phut, da_xuat_ban")
           .eq("da_xuat_ban", true)
+          .order("id", { ascending: false }),
+        supabase
+          .from("tro_choi_hoc_tap")
+          .select("id, ten_tro_choi, mo_ta, duong_dan, chu_de, hinh_dai_dien_url, thu_tu_hien_thi")
+          .eq("da_xuat_ban", true)
+          .order("thu_tu_hien_thi", { ascending: true })
           .order("id", { ascending: false }),
       ]);
 
@@ -183,6 +234,18 @@ function LuyenTap() {
       }
 
       setTopics(topicsData || []);
+      if (!gameError) {
+        setLearningGames(
+          (gameData || []).map((game) => ({
+            description: game.mo_ta || "Trò chơi học tập tương tác giúp ôn luyện kiến thức Địa lí.",
+            icon: "🎮",
+            imageUrl: game.hinh_dai_dien_url ? buildR2FileUrl(game.hinh_dai_dien_url) : "",
+            name: game.ten_tro_choi,
+            topic: game.chu_de,
+            url: game.duong_dan,
+          })),
+        );
+      }
       setQuizzes(
         loadedQuizzes.map((quiz) => ({
           ...quiz,
@@ -267,6 +330,19 @@ function LuyenTap() {
             </>
           ) : (
             <>
+              <section className="learning-games-section">
+                <div className="learning-games-heading">
+                  <p className="collection-eyebrow">Trò chơi học tập</p>
+                  <h2>TRÒ CHƠI HỌC TẬP</h2>
+                </div>
+
+                <div className="learning-games-grid">
+                  {learningGames.map((game) => (
+                    <LearningGameCard key={game.name} game={game} />
+                  ))}
+                </div>
+              </section>
+
               <section className="collection-controls">
                 <label>
                   <span>Tìm kiếm bài kiểm tra</span>
