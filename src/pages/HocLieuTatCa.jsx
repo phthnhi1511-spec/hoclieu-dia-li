@@ -9,13 +9,14 @@ import "./HocLieuTheoChuDe.css";
 const ITEMS_PER_PAGE = 9;
 const SKELETON_CARD_COUNT = 6;
 
-function MaterialListCard({ material, topicById, types }) {
+function MaterialListCard({ activityById, material, topicById, types }) {
   const typeName = getTypeName(material, types);
   const topic = topicById.get(material.chu_de_id);
   const detailPath = topic?.duong_dan ? `/hoc-lieu/${topic.duong_dan}/${material.id}` : "/hoc-lieu";
   const imageList = parseMediaList(material.duong_dan_anh_dai_dien);
   const thumbnailUrl = imageList[0] ? buildR2ProxyFileUrl(imageList[0]) : "";
   const materialKind = getMaterialKind(material, types);
+  const teachingActivity = activityById.get(material.hoat_dong_day_hoc_id);
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(thumbnailUrl) && !hasImageError;
 
@@ -38,6 +39,7 @@ function MaterialListCard({ material, topicById, types }) {
         <div className="material-meta">
           <span>{typeName}</span>
           {topic?.ten_chu_de ? <span>{topic.ten_chu_de}</span> : null}
+          {teachingActivity?.ten_hoat_dong ? <span>{teachingActivity.ten_hoat_dong}</span> : null}
           {material.noi_bat ? <span>Nổi bật</span> : null}
           {material.ten_nguon ? <span>Nguồn: {material.ten_nguon}</span> : null}
         </div>
@@ -136,10 +138,12 @@ function MaterialsPagination({ currentPage, totalPages, onPageChange }) {
 function HocLieuTatCa() {
   const [topics, setTopics] = useState([]);
   const [types, setTypes] = useState([]);
+  const [teachingActivities, setTeachingActivities] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [selectedTypeId, setSelectedTypeId] = useState("tat-ca");
+  const [selectedTeachingActivity, setSelectedTeachingActivity] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -155,6 +159,7 @@ function HocLieuTatCa() {
       const [
         { data: topicsData, error: topicsError },
         { data: typesData, error: typesError },
+        { data: teachingActivitiesData },
         { data: materialsData, error: materialsError },
       ] = await Promise.all([
         supabase
@@ -165,6 +170,11 @@ function HocLieuTatCa() {
         supabase
           .from("loai_hoc_lieu")
           .select("id, ten_loai, duong_dan")
+          .eq("dang_hien_thi", true)
+          .order("thu_tu_hien_thi", { ascending: true }),
+        supabase
+          .from("hoat_dong_day_hoc")
+          .select("id, ten_hoat_dong, duong_dan")
           .eq("dang_hien_thi", true)
           .order("thu_tu_hien_thi", { ascending: true }),
         supabase
@@ -185,6 +195,7 @@ function HocLieuTatCa() {
       } else {
         setTopics(topicsData || []);
         setTypes(typesData || []);
+        setTeachingActivities(teachingActivitiesData || []);
         setMaterials(materialsData || []);
       }
 
@@ -202,6 +213,10 @@ function HocLieuTatCa() {
     () => new Map(topics.map((topic) => [topic.id, topic])),
     [topics],
   );
+  const activityById = useMemo(
+    () => new Map(teachingActivities.map((activity) => [activity.id, activity])),
+    [teachingActivities],
+  );
 
   const filteredMaterials = useMemo(() => {
     const keyword = deferredSearchText.trim().toLowerCase();
@@ -212,6 +227,9 @@ function HocLieuTatCa() {
         selectedTopicId === "tat-ca" || material.chu_de_id === Number(selectedTopicId);
       const matchesType =
         selectedTypeId === "tat-ca" || material.loai_hoc_lieu_id === Number(selectedTypeId);
+      const matchesTeachingActivity =
+        selectedTeachingActivity === "tat-ca" ||
+        material.hoat_dong_day_hoc_id === Number(selectedTeachingActivity);
       const matchesSearch =
         keyword === "" ||
         material.tieu_de?.toLowerCase().includes(keyword) ||
@@ -219,9 +237,17 @@ function HocLieuTatCa() {
         topicName.includes(keyword) ||
         getTypeName(material, types).toLowerCase().includes(keyword);
 
-      return matchesTopic && matchesType && matchesSearch;
+      return matchesTopic && matchesType && matchesTeachingActivity && matchesSearch;
     });
-  }, [materials, deferredSearchText, selectedTopicId, selectedTypeId, topicById, types]);
+  }, [
+    materials,
+    deferredSearchText,
+    selectedTeachingActivity,
+    selectedTopicId,
+    selectedTypeId,
+    topicById,
+    types,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
@@ -319,6 +345,24 @@ function HocLieuTatCa() {
                   ))}
                 </select>
               </label>
+
+              <label>
+                <span>Lọc theo hoạt động dạy học</span>
+                <select
+                  value={selectedTeachingActivity}
+                  onChange={(event) => {
+                    setSelectedTeachingActivity(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="tat-ca">Tất cả hoạt động</option>
+                  {teachingActivities.map((activity) => (
+                    <option key={activity.id} value={activity.id}>
+                      {activity.ten_hoat_dong}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </section>
 
             {error ? (
@@ -333,6 +377,7 @@ function HocLieuTatCa() {
                   {paginatedMaterials.map((material) => (
                     <MaterialListCard
                       key={material.id}
+                      activityById={activityById}
                       material={material}
                       topicById={topicById}
                       types={types}

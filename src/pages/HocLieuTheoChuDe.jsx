@@ -9,12 +9,13 @@ import "./HocLieuTheoChuDe.css";
 const ITEMS_PER_PAGE = 6;
 const SKELETON_CARD_COUNT = 6;
 
-function MaterialListCard({ duongDan, material, types }) {
+function MaterialListCard({ activityById, duongDan, material, types }) {
   const typeName = getTypeName(material, types);
   const detailPath = `/hoc-lieu/${duongDan}/${material.id}`;
   const imageList = parseMediaList(material.duong_dan_anh_dai_dien);
   const thumbnailUrl = imageList[0] ? buildR2ProxyFileUrl(imageList[0]) : "";
   const materialKind = getMaterialKind(material, types);
+  const teachingActivity = activityById.get(material.hoat_dong_day_hoc_id);
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(thumbnailUrl) && !hasImageError;
 
@@ -36,6 +37,7 @@ function MaterialListCard({ duongDan, material, types }) {
       <div className="material-list-body">
         <div className="material-meta">
           <span>{typeName}</span>
+          {teachingActivity?.ten_hoat_dong ? <span>{teachingActivity.ten_hoat_dong}</span> : null}
           {material.noi_bat ? <span>Nổi bật</span> : null}
           {material.ten_nguon ? <span>Nguồn: {material.ten_nguon}</span> : null}
         </div>
@@ -87,6 +89,10 @@ function MaterialsControlsSkeleton() {
         <div className="material-skeleton material-skeleton-label" />
         <div className="material-skeleton material-skeleton-input" />
       </div>
+      <div>
+        <div className="material-skeleton material-skeleton-label" />
+        <div className="material-skeleton material-skeleton-input" />
+      </div>
     </section>
   );
 }
@@ -130,9 +136,11 @@ function HocLieuTheoChuDe() {
   const { duongDan } = useParams();
   const [topic, setTopic] = useState(null);
   const [types, setTypes] = useState([]);
+  const [teachingActivities, setTeachingActivities] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedTypeId, setSelectedTypeId] = useState("tat-ca");
+  const [selectedTeachingActivity, setSelectedTeachingActivity] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -146,7 +154,9 @@ function HocLieuTheoChuDe() {
       setError("");
       setTopic(null);
       setMaterials([]);
+      setTeachingActivities([]);
       setSelectedTypeId("tat-ca");
+      setSelectedTeachingActivity("tat-ca");
       setCurrentPage(1);
 
       const { data: topicData, error: topicError } = await supabase
@@ -169,11 +179,20 @@ function HocLieuTheoChuDe() {
         return;
       }
 
-      const [{ data: typeData, error: typeError }, { data: materialData, error: materialError }] =
+      const [
+        { data: typeData, error: typeError },
+        { data: teachingActivityData },
+        { data: materialData, error: materialError },
+      ] =
         await Promise.all([
           supabase
             .from("loai_hoc_lieu")
             .select("id, ten_loai, duong_dan")
+            .eq("dang_hien_thi", true)
+            .order("thu_tu_hien_thi", { ascending: true }),
+          supabase
+            .from("hoat_dong_day_hoc")
+            .select("id, ten_hoat_dong, duong_dan")
             .eq("dang_hien_thi", true)
             .order("thu_tu_hien_thi", { ascending: true }),
           supabase
@@ -193,6 +212,7 @@ function HocLieuTheoChuDe() {
       } else {
         setTopic(topicData);
         setTypes(typeData || []);
+        setTeachingActivities(teachingActivityData || []);
         setMaterials(materialData || []);
       }
 
@@ -206,21 +226,29 @@ function HocLieuTheoChuDe() {
     };
   }, [duongDan]);
 
+  const activityById = useMemo(
+    () => new Map(teachingActivities.map((activity) => [activity.id, activity])),
+    [teachingActivities],
+  );
+
   const filteredMaterials = useMemo(() => {
     const keyword = deferredSearchText.trim().toLowerCase();
 
     return materials.filter((material) => {
       const matchesType =
         selectedTypeId === "tat-ca" || material.loai_hoc_lieu_id === Number(selectedTypeId);
+      const matchesTeachingActivity =
+        selectedTeachingActivity === "tat-ca" ||
+        material.hoat_dong_day_hoc_id === Number(selectedTeachingActivity);
       const matchesSearch =
         keyword === "" ||
         material.tieu_de?.toLowerCase().includes(keyword) ||
         material.mo_ta?.toLowerCase().includes(keyword) ||
         getTypeName(material, types).toLowerCase().includes(keyword);
 
-      return matchesType && matchesSearch;
+      return matchesType && matchesTeachingActivity && matchesSearch;
     });
-  }, [materials, deferredSearchText, selectedTypeId, types]);
+  }, [materials, deferredSearchText, selectedTeachingActivity, selectedTypeId, types]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
@@ -310,6 +338,24 @@ function HocLieuTheoChuDe() {
                   ))}
                 </select>
               </label>
+
+              <label>
+                <span>Lọc theo hoạt động dạy học</span>
+                <select
+                  value={selectedTeachingActivity}
+                  onChange={(event) => {
+                    setSelectedTeachingActivity(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="tat-ca">Tất cả hoạt động</option>
+                  {teachingActivities.map((activity) => (
+                    <option key={activity.id} value={activity.id}>
+                      {activity.ten_hoat_dong}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </section>
 
             {error ? (
@@ -324,6 +370,7 @@ function HocLieuTheoChuDe() {
                   {paginatedMaterials.map((material) => (
                     <MaterialListCard
                       key={material.id}
+                      activityById={activityById}
                       duongDan={duongDan}
                       material={material}
                       types={types}

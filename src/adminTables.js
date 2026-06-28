@@ -39,6 +39,11 @@ const references = {
     labelField: "ten_loai",
     table: "loai_hoc_lieu",
   },
+  hoatDongDayHoc: {
+    entityLabel: "hoạt động dạy học",
+    labelField: "ten_hoat_dong",
+    table: "hoat_dong_day_hoc",
+  },
 };
 
 export const adminTables = [
@@ -66,6 +71,17 @@ export const adminTables = [
   },
   {
     fields: [
+      { name: "ten_hoat_dong", label: "Tên hoạt động", required: true },
+      { name: "duong_dan", label: "Đường dẫn", required: true },
+      { name: "mo_ta", label: "Mô tả", type: "textarea" },
+      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
+      { name: "dang_hien_thi", label: "Đang hiển thị", type: "boolean" },
+    ],
+    label: "Hoạt động dạy học",
+    name: "hoat_dong_day_hoc",
+  },
+  {
+    fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
       { name: "mo_ta", label: "Mô tả", type: "textarea" },
       { name: "chu_de_id", label: "Chủ đề", reference: references.chuDe, type: "number" },
@@ -73,6 +89,12 @@ export const adminTables = [
         name: "loai_hoc_lieu_id",
         label: "Loại học liệu",
         reference: references.loaiHocLieu,
+        type: "number",
+      },
+      {
+        name: "hoat_dong_day_hoc_id",
+        label: "Hoạt động dạy học",
+        reference: references.hoatDongDayHoc,
         type: "number",
       },
       {
