@@ -148,6 +148,7 @@ function HocLieuTheoChuDe() {
   const [searchText, setSearchText] = useState("");
   const [selectedTypeId, setSelectedTypeId] = useState("tat-ca");
   const [selectedTeachingActivity, setSelectedTeachingActivity] = useState("tat-ca");
+  const [selectedSourceId, setSelectedSourceId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -262,15 +263,18 @@ function HocLieuTheoChuDe() {
       const matchesTeachingActivity =
         selectedTeachingActivity === "tat-ca" ||
         material.hoat_dong_day_hoc_id === Number(selectedTeachingActivity);
+      const matchesSource =
+        selectedSourceId === "tat-ca" ||
+        material.nguon_hoc_lieu_id === Number(selectedSourceId);
       const matchesSearch =
         keyword === "" ||
         material.tieu_de?.toLowerCase().includes(keyword) ||
         material.mo_ta?.toLowerCase().includes(keyword) ||
         getTypeName(material, types).toLowerCase().includes(keyword);
 
-      return matchesType && matchesTeachingActivity && matchesSearch;
+      return matchesType && matchesTeachingActivity && matchesSource && matchesSearch;
     });
-  }, [materials, deferredSearchText, selectedTeachingActivity, selectedTypeId, types]);
+  }, [materials, deferredSearchText, selectedTeachingActivity, selectedTypeId, selectedSourceId, types]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
@@ -330,54 +334,76 @@ function HocLieuTheoChuDe() {
         ) : (
           <>
             <section className="materials-controls">
-              <label>
-                <span>Tìm kiếm học liệu</span>
-                <input
-                  type="search"
-                  value={searchText}
-                  onChange={(event) => {
-                    setSearchText(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Nhập tên tài liệu, mô tả hoặc loại học liệu"
-                />
-              </label>
+              <div className="materials-controls-search">
+                <label>
+                  <span>Tìm kiếm học liệu</span>
+                  <input
+                    type="search"
+                    value={searchText}
+                    onChange={(event) => {
+                      setSearchText(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Nhập tên tài liệu, mô tả hoặc loại học liệu"
+                  />
+                </label>
+              </div>
 
-              <label>
-                <span>Lọc theo loại học liệu</span>
-                <select
-                  value={selectedTypeId}
-                  onChange={(event) => {
-                    setSelectedTypeId(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="tat-ca">Tất cả loại học liệu</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.ten_loai}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="materials-controls-filters">
+                <label>
+                  <span>Lọc theo loại học liệu</span>
+                  <select
+                    value={selectedTypeId}
+                    onChange={(event) => {
+                      setSelectedTypeId(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả loại học liệu</option>
+                    {types.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.ten_loai}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label>
-                <span>Lọc theo hoạt động dạy học</span>
-                <select
-                  value={selectedTeachingActivity}
-                  onChange={(event) => {
-                    setSelectedTeachingActivity(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="tat-ca">Tất cả hoạt động</option>
-                  {teachingActivities.map((activity) => (
-                    <option key={activity.id} value={activity.id}>
-                      {activity.ten_hoat_dong}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <label>
+                  <span>Lọc theo hoạt động dạy học</span>
+                  <select
+                    value={selectedTeachingActivity}
+                    onChange={(event) => {
+                      setSelectedTeachingActivity(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả hoạt động</option>
+                    {teachingActivities.map((activity) => (
+                      <option key={activity.id} value={activity.id}>
+                        {activity.ten_hoat_dong}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Lọc theo nguồn học liệu</span>
+                  <select
+                    value={selectedSourceId}
+                    onChange={(event) => {
+                      setSelectedSourceId(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả nguồn</option>
+                    {sources.map((src) => (
+                      <option key={src.id} value={src.id}>
+                        {src.ten_nguon}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </section>
 
             {error ? (

@@ -151,6 +151,7 @@ function HocLieuTatCa() {
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
   const [selectedTypeId, setSelectedTypeId] = useState("tat-ca");
   const [selectedTeachingActivity, setSelectedTeachingActivity] = useState("tat-ca");
+  const [selectedSourceId, setSelectedSourceId] = useState("tat-ca");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -252,6 +253,9 @@ function HocLieuTatCa() {
       const matchesTeachingActivity =
         selectedTeachingActivity === "tat-ca" ||
         material.hoat_dong_day_hoc_id === Number(selectedTeachingActivity);
+      const matchesSource =
+        selectedSourceId === "tat-ca" ||
+        material.nguon_hoc_lieu_id === Number(selectedSourceId);
       const matchesSearch =
         keyword === "" ||
         material.tieu_de?.toLowerCase().includes(keyword) ||
@@ -259,7 +263,7 @@ function HocLieuTatCa() {
         topicName.includes(keyword) ||
         getTypeName(material, types).toLowerCase().includes(keyword);
 
-      return matchesTopic && matchesType && matchesTeachingActivity && matchesSearch;
+      return matchesTopic && matchesType && matchesTeachingActivity && matchesSource && matchesSearch;
     });
   }, [
     materials,
@@ -267,6 +271,7 @@ function HocLieuTatCa() {
     selectedTeachingActivity,
     selectedTopicId,
     selectedTypeId,
+    selectedSourceId,
     topicById,
     types,
   ]);
@@ -319,72 +324,94 @@ function HocLieuTatCa() {
         ) : (
           <>
             <section className="materials-controls">
-              <label>
-                <span>Tìm kiếm học liệu</span>
-                <input
-                  type="search"
-                  value={searchText}
-                  onChange={(event) => {
-                    setSearchText(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Nhập tên học liệu, mô tả, chủ đề hoặc loại học liệu"
-                />
-              </label>
+              <div className="materials-controls-search">
+                <label>
+                  <span>Tìm kiếm học liệu</span>
+                  <input
+                    type="search"
+                    value={searchText}
+                    onChange={(event) => {
+                      setSearchText(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Nhập tên học liệu, mô tả, chủ đề hoặc loại học liệu"
+                  />
+                </label>
+              </div>
 
-              <label>
-                <span>Lọc theo chủ đề</span>
-                <select
-                  value={selectedTopicId}
-                  onChange={(event) => {
-                    setSelectedTopicId(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="tat-ca">Tất cả chủ đề</option>
-                  {topics.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.ten_chu_de}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="materials-controls-filters">
+                <label>
+                  <span>Lọc theo chủ đề</span>
+                  <select
+                    value={selectedTopicId}
+                    onChange={(event) => {
+                      setSelectedTopicId(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả chủ đề</option>
+                    {topics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.ten_chu_de}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label>
-                <span>Lọc theo loại học liệu</span>
-                <select
-                  value={selectedTypeId}
-                  onChange={(event) => {
-                    setSelectedTypeId(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="tat-ca">Tất cả loại học liệu</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.ten_loai}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <label>
+                  <span>Lọc theo loại học liệu</span>
+                  <select
+                    value={selectedTypeId}
+                    onChange={(event) => {
+                      setSelectedTypeId(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả loại học liệu</option>
+                    {types.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.ten_loai}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label>
-                <span>Lọc theo hoạt động dạy học</span>
-                <select
-                  value={selectedTeachingActivity}
-                  onChange={(event) => {
-                    setSelectedTeachingActivity(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="tat-ca">Tất cả hoạt động</option>
-                  {teachingActivities.map((activity) => (
-                    <option key={activity.id} value={activity.id}>
-                      {activity.ten_hoat_dong}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <label>
+                  <span>Lọc theo hoạt động dạy học</span>
+                  <select
+                    value={selectedTeachingActivity}
+                    onChange={(event) => {
+                      setSelectedTeachingActivity(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả hoạt động</option>
+                    {teachingActivities.map((activity) => (
+                      <option key={activity.id} value={activity.id}>
+                        {activity.ten_hoat_dong}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Lọc theo nguồn học liệu</span>
+                  <select
+                    value={selectedSourceId}
+                    onChange={(event) => {
+                      setSelectedSourceId(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="tat-ca">Tất cả nguồn</option>
+                    {sources.map((src) => (
+                      <option key={src.id} value={src.id}>
+                        {src.ten_nguon}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </section>
 
             {error ? (
