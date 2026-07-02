@@ -44,11 +44,18 @@ The current project is no longer using a minimal generic schema. When working on
   * Important fields currently used by the app: `ten_hoat_dong`, `duong_dan`, `mo_ta`, `thu_tu_hien_thi`, `dang_hien_thi`.
   * Default seed values include `Khởi động`, `Hình thành kiến thức`, `Luyện tập`, and `Vận dụng`, but admins can manage this as a normal category table.
 
+* `nguon_hoc_lieu`
+
+  * Material source classification data managed by admin.
+  * Important fields currently used by the app: `ten_nguon`, `mo_ta`, `thu_tu_hien_thi`.
+  * Default seed values include `Tự thiết kế` and `Thu thập`.
+
 * `hoc_lieu`
 
   * Stores metadata only, not binary file data.
   * Common fields may include: title, description, topic id, material type id, teaching activity id, file path / object key, preview image path, multiple image paths, external worksheet link, source name, grade, featured flag, and publish flag.
   * `hoat_dong_day_hoc_id` is nullable and references `hoat_dong_day_hoc(id)` for filtering learning materials by teaching activity.
+  * `nguon_hoc_lieu_id` is nullable and references `nguon_hoc_lieu(id)` for classification of material sources (Tự thiết kế / Thu thập).
   * Some material types can use multiple image paths stored as newline-separated values.
 
 * `de_thi`

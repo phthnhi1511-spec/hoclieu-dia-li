@@ -553,31 +553,6 @@ function Admin() {
       const { error: saveError } = await request;
 
       if (saveError) {
-        const isMissingTeachingActivityColumn =
-          selectedTable.name === "hoc_lieu" &&
-          Object.prototype.hasOwnProperty.call(payload, "hoat_dong_day_hoc_id") &&
-          saveError.message?.includes("hoat_dong_day_hoc_id");
-
-        if (isMissingTeachingActivityColumn) {
-          const fallbackPayload = { ...payload };
-          delete fallbackPayload.hoat_dong_day_hoc_id;
-
-          const fallbackRequest = editingId
-            ? supabase.from(selectedTable.name).update(fallbackPayload).eq("id", editingId)
-            : supabase.from(selectedTable.name).insert(fallbackPayload);
-          const { error: fallbackError } = await fallbackRequest;
-
-          if (!fallbackError) {
-            setMessage(
-              "Đã lưu bản ghi. Cần chạy SQL thêm cột hoat_dong_day_hoc_id để lưu được thẻ hoạt động dạy học.",
-            );
-            resetForm();
-            await loadRows();
-            setSaving(false);
-            return;
-          }
-        }
-
         throw new Error(saveError.message);
       }
 

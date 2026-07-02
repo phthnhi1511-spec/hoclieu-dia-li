@@ -231,6 +231,18 @@
   padding: 6px 10px;
 }
 
+.material-meta span.source-badge-self {
+  background: #fff1e8;
+  color: #9c4a00;
+  border: 1px solid #ffd3b6;
+}
+
+.material-meta span.source-badge-external {
+  background: #eef1ff;
+  color: #2643a2;
+  border: 1px solid #c9d2ff;
+}
+
 .material-list-body h2 {
   color: #0f440f;
   display: -webkit-box;

@@ -9,7 +9,7 @@ import "./HocLieuTheoChuDe.css";
 const ITEMS_PER_PAGE = 9;
 const SKELETON_CARD_COUNT = 6;
 
-function MaterialListCard({ activityById, material, topicById, types }) {
+function MaterialListCard({ activityById, material, topicById, types, sourceById }) {
   const typeName = getTypeName(material, types);
   const topic = topicById.get(material.chu_de_id);
   const detailPath = topic?.duong_dan ? `/hoc-lieu/${topic.duong_dan}/${material.id}` : "/hoc-lieu";
@@ -17,6 +17,7 @@ function MaterialListCard({ activityById, material, topicById, types }) {
   const thumbnailUrl = imageList[0] ? buildR2ProxyFileUrl(imageList[0]) : "";
   const materialKind = getMaterialKind(material, types);
   const teachingActivity = activityById.get(material.hoat_dong_day_hoc_id);
+  const sourceClassification = sourceById?.get(material.nguon_hoc_lieu_id);
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(thumbnailUrl) && !hasImageError;
 
@@ -40,6 +41,11 @@ function MaterialListCard({ activityById, material, topicById, types }) {
           <span>{typeName}</span>
           {topic?.ten_chu_de ? <span>{topic.ten_chu_de}</span> : null}
           {teachingActivity?.ten_hoat_dong ? <span>{teachingActivity.ten_hoat_dong}</span> : null}
+          {sourceClassification?.ten_nguon ? (
+            <span className={sourceClassification.ten_nguon.toLowerCase().includes("tự thiết kế") ? "source-badge-self" : "source-badge-external"}>
+              {sourceClassification.ten_nguon}
+            </span>
+          ) : null}
           {material.noi_bat ? <span>Nổi bật</span> : null}
           {material.ten_nguon ? <span>Nguồn: {material.ten_nguon}</span> : null}
         </div>
@@ -139,6 +145,7 @@ function HocLieuTatCa() {
   const [topics, setTopics] = useState([]);
   const [types, setTypes] = useState([]);
   const [teachingActivities, setTeachingActivities] = useState([]);
+  const [sources, setSources] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("tat-ca");
@@ -160,6 +167,7 @@ function HocLieuTatCa() {
         { data: topicsData, error: topicsError },
         { data: typesData, error: typesError },
         { data: teachingActivitiesData },
+        sourcesData,
         { data: materialsData, error: materialsError },
       ] = await Promise.all([
         supabase
@@ -177,6 +185,15 @@ function HocLieuTatCa() {
           .select("id, ten_hoat_dong, duong_dan")
           .eq("dang_hien_thi", true)
           .order("thu_tu_hien_thi", { ascending: true }),
+        supabase
+          .from("nguon_hoc_lieu")
+          .select("id, ten_nguon")
+          .order("thu_tu_hien_thi", { ascending: true })
+          .then(({ data, error }) => {
+            if (error) return [];
+            return data || [];
+          })
+          .catch(() => []),
         supabase
           .from("hoc_lieu")
           .select("*")
@@ -196,6 +213,7 @@ function HocLieuTatCa() {
         setTopics(topicsData || []);
         setTypes(typesData || []);
         setTeachingActivities(teachingActivitiesData || []);
+        setSources(sourcesData || []);
         setMaterials(materialsData || []);
       }
 
@@ -216,6 +234,10 @@ function HocLieuTatCa() {
   const activityById = useMemo(
     () => new Map(teachingActivities.map((activity) => [activity.id, activity])),
     [teachingActivities],
+  );
+  const sourceById = useMemo(
+    () => new Map(sources.map((src) => [src.id, src])),
+    [sources],
   );
 
   const filteredMaterials = useMemo(() => {
@@ -381,6 +403,7 @@ function HocLieuTatCa() {
                       material={material}
                       topicById={topicById}
                       types={types}
+                      sourceById={sourceById}
                     />
                   ))}
                 </section>

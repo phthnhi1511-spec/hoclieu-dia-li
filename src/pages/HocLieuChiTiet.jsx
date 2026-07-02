@@ -759,6 +759,7 @@ function HocLieuChiTiet() {
   const { duongDan, materialId } = useParams();
   const [topic, setTopic] = useState(null);
   const [types, setTypes] = useState([]);
+  const [sources, setSources] = useState([]);
   const [material, setMaterial] = useState(null);
   const [resolvedFileUrl, setResolvedFileUrl] = useState("");
   const [resolvedImageUrls, setResolvedImageUrls] = useState([]);
@@ -799,21 +800,33 @@ function HocLieuChiTiet() {
         return;
       }
 
-      const [{ data: typeData, error: typeError }, { data: materialData, error: materialError }] =
-        await Promise.all([
-          supabase
-            .from("loai_hoc_lieu")
-            .select("id, ten_loai, duong_dan")
-            .eq("dang_hien_thi", true)
-            .order("thu_tu_hien_thi", { ascending: true }),
-          supabase
-            .from("hoc_lieu")
-            .select("*")
-            .eq("id", Number(materialId))
-            .eq("chu_de_id", topicData.id)
-            .eq("da_xuat_ban", true)
-            .maybeSingle(),
-        ]);
+      const [
+        { data: typeData, error: typeError },
+        sourcesData,
+        { data: materialData, error: materialError },
+      ] = await Promise.all([
+        supabase
+          .from("loai_hoc_lieu")
+          .select("id, ten_loai, duong_dan")
+          .eq("dang_hien_thi", true)
+          .order("thu_tu_hien_thi", { ascending: true }),
+        supabase
+          .from("nguon_hoc_lieu")
+          .select("id, ten_nguon")
+          .order("thu_tu_hien_thi", { ascending: true })
+          .then(({ data, error }) => {
+            if (error) return [];
+            return data || [];
+          })
+          .catch(() => []),
+        supabase
+          .from("hoc_lieu")
+          .select("*")
+          .eq("id", Number(materialId))
+          .eq("chu_de_id", topicData.id)
+          .eq("da_xuat_ban", true)
+          .maybeSingle(),
+      ]);
 
       if (!isMounted) return;
 
@@ -826,6 +839,7 @@ function HocLieuChiTiet() {
       } else {
         setTopic(topicData);
         setTypes(typeData || []);
+        setSources(sourcesData || []);
         setMaterial(materialData);
       }
 
@@ -907,6 +921,10 @@ function HocLieuChiTiet() {
     () => (material ? getMaterialKind(material, types) : ""),
     [material, types],
   );
+  const sourceClassification = useMemo(
+    () => (material && sources.length > 0 ? sources.find((src) => src.id === material.nguon_hoc_lieu_id) : null),
+    [material, sources],
+  );
   const primaryAction = useMemo(
     () => getPrimaryActionConfig(materialKind, fileUrl),
     [fileUrl, materialKind],
@@ -958,6 +976,11 @@ function HocLieuChiTiet() {
 
               <div className="material-detail-meta">
                 <span>{getTypeName(material, types)}</span>
+                {sourceClassification?.ten_nguon ? (
+                  <span className={sourceClassification.ten_nguon.toLowerCase().includes("tự thiết kế") ? "source-badge-self" : "source-badge-external"}>
+                    {sourceClassification.ten_nguon}
+                  </span>
+                ) : null}
                 {material?.ten_nguon ? <span>Nguồn: {material.ten_nguon}</span> : null}
                 {material?.noi_bat ? <span>Nổi bật</span> : null}
               </div>
