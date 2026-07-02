@@ -279,6 +279,10 @@
   margin: 0 0 8px;
 }
 
+.map-detail-section p {
+  white-space: pre-line;
+}
+
 .map-chip-list {
   display: flex;
   flex-wrap: wrap;
