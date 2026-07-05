@@ -33,7 +33,10 @@ export function getMaterialKind(material, types) {
   if (typeSlug === "powerpoint") return "powerpoint";
   if (typeSlug === "video") return "video";
   if (typeSlug === "ke-hoach-bai-day") return "lesson-plan";
-  if (typeSlug === "phieu-hoc-tap") return "worksheet";
+  if (typeSlug === "phieu-hoc-tap") {
+    if (fileExtension === "pdf") return "pdf";
+    return "image-gallery";
+  }
   if (typeSlug === "so-do-tu-duy") return "mindmap";
   if (typeSlug === "infographic") return "infographic";
 

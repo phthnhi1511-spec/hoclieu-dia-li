@@ -28,15 +28,6 @@ const officeViewerBaseUrl = "https://view.officeapps.live.com/op/embed.aspx?src=
 function getPrimaryActionConfig(materialKind, fileUrl) {
   if (!fileUrl) return null;
 
-  if (materialKind === "worksheet") {
-    return {
-      href: fileUrl,
-      label: "Mở worksheet",
-      rel: "noreferrer",
-      target: "_blank",
-    };
-  }
-
   return {
     href: fileUrl,
     label: "Tải về",
@@ -171,26 +162,7 @@ function LessonPlanDocxPreview({ fileUrl }) {
   );
 }
 
-function WorksheetPreview({ linkUrl, imageUrls }) {
-  return (
-    <div className="material-detail-note">
-      {imageUrls.length > 0 ? (
-        <div className="material-detail-gallery material-detail-gallery-single">
-          <img src={imageUrls[0]} alt="Xem trước phiếu học tập" />
-        </div>
-      ) : (
-        <div className="material-detail-placeholder">Phiếu học tập trực tuyến</div>
-      )}
-      <p>
-        Phiếu học tập được mở bằng liên kết ngoài. Bạn có thể xem ảnh preview
-        trước rồi mở bài làm.
-      </p>
-      <a className="material-detail-inline-link" href={linkUrl} target="_blank" rel="noreferrer">
-        Mở Life Worksheet
-      </a>
-    </div>
-  );
-}
+
 
 function ImageGalleryPreview({ imageUrls, label }) {
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -754,9 +726,7 @@ function MaterialDetailPreview({ material, types, fileUrl, imageUrls, officeFile
     return <ImageGalleryPreview imageUrls={imageUrls} label={getTypeName(material, types)} />;
   }
 
-  if (kind === "worksheet") {
-    return <WorksheetPreview linkUrl={fileUrl} imageUrls={imageUrls} />;
-  }
+
 
   if (kind === "mindmap") {
     return <ImageGalleryPreview imageUrls={imageUrls} label="Sơ đồ tư duy" />;
@@ -1045,7 +1015,7 @@ function HocLieuChiTiet() {
                 {primaryAction ? (
                   <a
                     href={primaryAction.href}
-                    onClick={materialKind === "worksheet" ? undefined : handleDownload}
+                    onClick={handleDownload}
                     rel={primaryAction.rel}
                     target={primaryAction.target}
                     aria-disabled={downloading}
