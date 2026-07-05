@@ -166,6 +166,44 @@ function LessonPlanDocxPreview({ fileUrl }) {
 
 function ImageGalleryPreview({ imageUrls, label }) {
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [zoomScale, setZoomScale] = useState(1);
+
+  const viewportRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0);
+  const [scrollLeftState, setScrollLeftState] = useState(0);
+  const [scrollTopState, setScrollTopState] = useState(0);
+  const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    setMouseDownPos({ x: e.pageX, y: e.pageY });
+    if (zoomScale <= 1 || !viewportRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - viewportRef.current.offsetLeft);
+    setStartY(e.pageY - viewportRef.current.offsetTop);
+    setScrollLeftState(viewportRef.current.scrollLeft);
+    setScrollTopState(viewportRef.current.scrollTop);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || zoomScale <= 1 || !viewportRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - viewportRef.current.offsetLeft;
+    const y = e.pageY - viewportRef.current.offsetTop;
+    const walkX = (x - startX) * 1.5;
+    const walkY = (y - startY) * 1.5;
+    viewportRef.current.scrollLeft = scrollLeftState - walkX;
+    viewportRef.current.scrollTop = scrollTopState - walkY;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    setZoomScale(1);
+  }, [activeIndex]);
 
   useEffect(() => {
     if (activeIndex < 0) return undefined;
@@ -237,6 +275,36 @@ function ImageGalleryPreview({ imageUrls, label }) {
               <span>
                 {label} {activeIndex + 1}/{imageUrls.length}
               </span>
+
+              <div className="material-detail-lightbox-zoom-controls">
+                <button
+                  type="button"
+                  onClick={() => setZoomScale((s) => Math.max(1, s - 0.25))}
+                  disabled={zoomScale <= 1}
+                  aria-label="Thu nhỏ"
+                >
+                  -
+                </button>
+                <span>{Math.round(zoomScale * 100)}%</span>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale((s) => Math.min(3, s + 0.25))}
+                  disabled={zoomScale >= 3}
+                  aria-label="Phóng to"
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="material-detail-lightbox-zoom-reset"
+                  onClick={() => setZoomScale(1)}
+                  disabled={zoomScale === 1}
+                  aria-label="Đặt lại về mặc định"
+                >
+                  Đặt lại
+                </button>
+              </div>
+
               <button
                 type="button"
                 className="material-detail-lightbox-close"
@@ -258,13 +326,46 @@ function ImageGalleryPreview({ imageUrls, label }) {
                 >
                   ‹
                 </button>
-              ) : null}
+              ) : (
+                <div style={{ width: "46px" }} />
+              )}
 
-              <img
-                src={imageUrls[activeIndex]}
-                alt={`${label} ${activeIndex + 1}`}
-                className="material-detail-lightbox-image"
-              />
+              <div
+                ref={viewportRef}
+                className={`material-detail-lightbox-viewport ${zoomScale > 1 ? "is-zoomed" : ""}`}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={handleMouseUpOrLeave}
+                style={{ cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
+              >
+                <img
+                  src={imageUrls[activeIndex]}
+                  alt={`${label} ${activeIndex + 1}`}
+                  className={`material-detail-lightbox-image ${zoomScale > 1 ? "is-zoomed" : ""}`}
+                  style={{
+                    maxWidth: zoomScale === 1 ? "100%" : `${100 * zoomScale}%`,
+                    maxHeight: zoomScale === 1 ? "calc(100vh - 150px)" : `${100 * zoomScale}vh`,
+                    width: "auto",
+                    height: "auto",
+                    transition: isDragging ? "none" : "max-width 0.15s ease, max-height 0.15s ease",
+                    cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "zoom-out") : "zoom-in",
+                  }}
+                  onClick={(e) => {
+                    const distance = Math.sqrt(
+                      Math.pow(e.pageX - mouseDownPos.x, 2) + Math.pow(e.pageY - mouseDownPos.y, 2)
+                    );
+                    if (distance > 6) return;
+
+                    if (zoomScale > 1) {
+                      setZoomScale(1);
+                    } else {
+                      setZoomScale(1.5);
+                    }
+                  }}
+                  draggable={false}
+                />
+              </div>
 
               {imageUrls.length > 1 ? (
                 <button
@@ -278,7 +379,9 @@ function ImageGalleryPreview({ imageUrls, label }) {
                 >
                   ›
                 </button>
-              ) : null}
+              ) : (
+                <div style={{ width: "46px" }} />
+              )}
             </div>
           </div>
         </div>
