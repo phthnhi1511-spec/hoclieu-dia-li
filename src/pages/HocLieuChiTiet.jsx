@@ -234,7 +234,7 @@ function ImageGalleryPreview({ imageUrls, label }) {
 
   return (
     <>
-      <div className="material-detail-gallery">
+      <div className={`material-detail-gallery ${imageUrls.length === 1 ? "material-detail-gallery-single" : ""}`}>
         {imageUrls.map((imageUrl, index) => (
           <button
             key={`${imageUrl}-${index}`}
@@ -482,6 +482,32 @@ function AtlatPreview({ fileUrl, title }) {
   const turnTimeoutRef = useRef(null);
   const documentTaskRef = useRef(null);
 
+  const viewerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function handleFullscreenChange() {
+      setIsFullscreen(document.fullscreenElement === viewerRef.current);
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!viewerRef.current) return;
+
+    if (!document.fullscreenElement) {
+      viewerRef.current.requestFullscreen().catch((err) => {
+        console.error("Không thể kích hoạt chế độ toàn màn hình:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   useEffect(() => {
     function handleResize() {
       setViewportWidth(window.innerWidth);
@@ -558,11 +584,16 @@ function AtlatPreview({ fileUrl, title }) {
   }, [fileUrl]);
 
   const isCompactViewport = viewportWidth < 960;
-  const basePageWidth = isCompactViewport
-    ? Math.max(280, Math.min(440, viewportWidth - 64))
-    : Math.max(420, Math.min(560, Math.floor((viewportWidth - 140) / 2)));
-  const pageWidth = Math.max(220, basePageWidth - 34);
-  const bookHeight = Math.round(pageWidth * 1.42) + 72;
+  const maxPageWidthByWidth = isCompactViewport
+    ? (viewportWidth - 32)
+    : Math.floor((viewportWidth - 80) / 2);
+
+  const windowHeight = typeof window === "undefined" ? 800 : window.innerHeight;
+  const maxBookHeight = isFullscreen ? (windowHeight - 110) : Math.min(800, windowHeight - 200);
+  const maxPageWidthByHeight = Math.floor((maxBookHeight - 40) / 1.42);
+
+  const pageWidth = Math.max(220, Math.min(maxPageWidthByWidth, maxPageWidthByHeight) - 16);
+  const bookHeight = Math.round(pageWidth * 1.42) + 36;
   const step = isCompactViewport ? 1 : 2;
   const displayStartPage = Math.min(spreadStart, Math.max(pageCount, 1));
   const displayEndPage = isCompactViewport
@@ -615,7 +646,7 @@ function AtlatPreview({ fileUrl, title }) {
   }
 
   return (
-    <div className="material-atlat-viewer">
+    <div ref={viewerRef} className="material-atlat-viewer">
       <div className="material-atlat-toolbar">
         <div className="material-atlat-toolbar-info">
           <span>
@@ -630,6 +661,9 @@ function AtlatPreview({ fileUrl, title }) {
           </button>
           <button type="button" onClick={handleNext} disabled={!canGoNext}>
             Trang sau
+          </button>
+          <button type="button" onClick={toggleFullscreen}>
+            {isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
           </button>
         </div>
       </div>
@@ -684,6 +718,16 @@ function MaterialDetailPreview({ material, types, fileUrl, imageUrls, officeFile
     );
   }
 
+  if (kind === "excel") {
+    return (
+      <OfficePreview
+        fileUrl={officeFileUrl}
+        title={material.tieu_de}
+        helperText="Tài liệu Excel được hiển thị qua trình xem trực tuyến."
+      />
+    );
+  }
+
   if (kind === "lesson-plan") {
     if (fileExtension === "docx") {
       return <LessonPlanDocxPreview fileUrl={fileUrl} />;
@@ -700,6 +744,14 @@ function MaterialDetailPreview({ material, types, fileUrl, imageUrls, officeFile
 
   if (kind === "atlat") {
     return <AtlatPreview fileUrl={fileUrl} title={material.tieu_de} />;
+  }
+
+  if (kind === "atlat-image") {
+    return <ImageGalleryPreview imageUrls={imageUrls} label="Hình ảnh Atlat" />;
+  }
+
+  if (kind === "image-gallery") {
+    return <ImageGalleryPreview imageUrls={imageUrls} label={getTypeName(material, types)} />;
   }
 
   if (kind === "worksheet") {
@@ -877,6 +929,7 @@ function HocLieuChiTiet() {
       const fileExtension = getFileExtension(material.duong_dan_file);
       const needsOfficeViewerUrl =
         materialKind === "powerpoint" ||
+        materialKind === "excel" ||
         (materialKind === "lesson-plan" && fileExtension !== "docx");
 
       setAssetError("");

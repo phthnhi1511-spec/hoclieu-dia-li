@@ -188,14 +188,24 @@
 .material-detail-gallery-single {
   grid-template-columns: minmax(0, 1fr);
   width: min(920px, 100%);
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.material-detail-gallery-single img {
+  max-height: 82vh !important;
+  width: auto !important;
+  max-width: 100% !important;
 }
 
 .material-detail-gallery img {
-  aspect-ratio: 4 / 3;
   border-radius: 12px;
-  object-fit: cover;
+  max-height: 75vh;
+  object-fit: contain;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
+  height: auto;
 }
 
 .material-detail-gallery-item:hover img {
@@ -468,7 +478,29 @@
     linear-gradient(180deg, #f8fcf8 0%, #eef7f0 100%);
   min-height: 760px;
   overflow: hidden;
-  padding: 28px 28px 36px;
+  padding: 16px 16px 24px;
+}
+
+.material-atlat-viewer:fullscreen {
+  background: #0b100d;
+  padding: 16px;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.material-atlat-viewer:fullscreen .material-atlat-stage {
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 80px);
+  padding: 0;
+}
+
+.material-atlat-viewer:fullscreen .material-atlat-book {
+  height: 100%;
+  align-items: center;
 }
 
 .material-atlat-toolbar {
@@ -555,8 +587,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 648px;
-  padding: 18px 18px 42px;
+  padding: 6px 6px 28px;
   position: relative;
 }
 

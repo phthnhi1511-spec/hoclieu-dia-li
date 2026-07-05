@@ -33,14 +33,25 @@ export function getMaterialKind(material, types) {
   if (typeSlug === "powerpoint") return "powerpoint";
   if (typeSlug === "video") return "video";
   if (typeSlug === "ke-hoach-bai-day") return "lesson-plan";
-  if (typeSlug === "atlat") return "atlat";
   if (typeSlug === "phieu-hoc-tap") return "worksheet";
   if (typeSlug === "so-do-tu-duy") return "mindmap";
   if (typeSlug === "infographic") return "infographic";
 
+  if (typeSlug === "atlat") {
+    if (fileExtension === "pdf") return "atlat";
+    return "atlat-image";
+  }
+
+  if (typeSlug === "bang-so-lieu" || typeSlug === "bieu-do") {
+    if (["xls", "xlsx"].includes(fileExtension)) return "excel";
+    if (fileExtension === "pdf") return "pdf";
+    return "image-gallery";
+  }
+
   if (fileExtension === "pdf") return "pdf";
   if (["ppt", "pptx"].includes(fileExtension)) return "powerpoint";
   if (["doc", "docx"].includes(fileExtension)) return "lesson-plan";
+  if (["xls", "xlsx"].includes(fileExtension)) return "excel";
   if (["mp4", "webm", "ogg"].includes(fileExtension)) return "video";
   if (["jpg", "jpeg", "png", "webp"].includes(fileExtension)) return "infographic";
 
