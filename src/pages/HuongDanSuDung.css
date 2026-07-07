@@ -90,6 +90,12 @@
   font-size: 20px;
   font-weight: 800;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.guide-sitemap-section h3 svg {
+  color: #0b8b4d;
 }
 
 .guide-sitemap-subtitle {
@@ -121,8 +127,16 @@
 }
 
 .guide-card-icon {
-  font-size: 28px;
-  margin-bottom: 14px;
+  color: #0b8b4d;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.guide-card-icon svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 2.2;
 }
 
 .guide-sitemap-card h4 {
@@ -161,6 +175,12 @@
   font-size: 20px;
   font-weight: 800;
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.guide-file-section h3 svg {
+  color: #0b8b4d;
 }
 
 .guide-image-container {
