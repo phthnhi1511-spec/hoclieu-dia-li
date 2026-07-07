@@ -146,6 +146,7 @@ function Header() {
         <Link to="/ban-do" onClick={closeMenu}>BẢN ĐỒ</Link>
         <Link to="/luyen-tap" onClick={closeMenu}>LUYỆN TẬP</Link>
         <Link to="/khao-sat" onClick={closeMenu}>KHẢO SÁT</Link>
+        <Link to="/huong-dan" onClick={closeMenu}>HƯỚNG DẪN</Link>
 
         <div className={`nav-dropdown${openDropdown === "library" ? " is-open" : ""}`}>
           <div className="nav-dropdown-heading">

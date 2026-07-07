@@ -20,6 +20,13 @@ const floatingContactAvatarUpload = {
   provider: "cloudflare-r2",
 };
 
+const guidePageFileUpload = {
+  accept: ".png,.jpg,.jpeg,.webp,.docx,.pptx,.pdf",
+  functionName: "r2-presign-upload",
+  helperText: "Tải file ảnh hướng dẫn hoặc tài liệu (.docx, .pptx, .pdf) lên Cloudflare R2.",
+  provider: "cloudflare-r2",
+};
+
 function isImageUploadField(field) {
   return Boolean(field.upload?.accept && /\.(png|jpe?g|webp)/i.test(field.upload.accept));
 }
@@ -297,14 +304,22 @@ function Admin() {
   function getActiveField(field) {
     if (
       selectedTable.name === "cau_hinh_website" &&
-      field.name === "gia_tri_cau_hinh" &&
-      formData.khoa_cau_hinh === "floating_contact_avatar"
+      field.name === "gia_tri_cau_hinh"
     ) {
-      return {
-        ...field,
-        label: "Ảnh đại diện liên hệ",
-        upload: floatingContactAvatarUpload,
-      };
+      if (formData.khoa_cau_hinh === "floating_contact_avatar") {
+        return {
+          ...field,
+          label: "Ảnh đại diện liên hệ",
+          upload: floatingContactAvatarUpload,
+        };
+      }
+      if (formData.khoa_cau_hinh === "guide_page_file") {
+        return {
+          ...field,
+          label: "Tệp tin hướng dẫn sử dụng",
+          upload: guidePageFileUpload,
+        };
+      }
     }
 
     return field;

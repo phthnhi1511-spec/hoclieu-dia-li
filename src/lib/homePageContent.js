@@ -42,6 +42,9 @@ export const HOME_CONFIG_KEY_OPTIONS = [
   { label: "Footer - Đơn vị", value: "footer_contact_school" },
   { label: "Liên hệ nổi - Ảnh đại diện", value: "floating_contact_avatar" },
   { label: "Liên hệ nổi - Link Facebook", value: "floating_contact_facebook_url" },
+  { label: "Trang hướng dẫn - Tiêu đề", value: "guide_page_title" },
+  { label: "Trang hướng dẫn - Nội dung", value: "guide_page_content" },
+  { label: "Trang hướng dẫn - File tài liệu (.png,.jpg,.docx,.pptx,.pdf)", value: "guide_page_file" },
 ];
 
 export const HOME_SECTION_LIMITS = {

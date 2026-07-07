@@ -1,0 +1,344 @@
+/* STYLE CHO TRANG HƯỚNG DẪN SỬ DỤNG */
+.guide-page-container {
+  min-height: 100vh;
+  background-color: #f7fbf8;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-main {
+  flex: 1;
+}
+
+/* Banner */
+.guide-banner {
+  height: 240px;
+  position: relative;
+  background: url('https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=1600') no-repeat center center;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+}
+
+.guide-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(15, 68, 15, 0.85) 0%, rgba(10, 40, 10, 0.9) 100%);
+}
+
+.guide-banner-content {
+  position: relative;
+  z-index: 1;
+  padding: 0 20px;
+}
+
+.guide-banner-content h1 {
+  font-size: 38px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.guide-banner-content p {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Layout */
+.guide-layout {
+  max-width: 1200px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+
+.guide-content-section {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 68, 15, 0.05);
+  padding: 40px;
+}
+
+.guide-title {
+  color: #1e3a2f;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.guide-intro {
+  color: #53675a;
+  font-size: 16px;
+  line-height: 1.7;
+  white-space: pre-line;
+  margin-bottom: 40px;
+  border-left: 4px solid #0b8b4d;
+  padding-left: 20px;
+}
+
+/* Sitemap */
+.guide-sitemap-section {
+  margin-bottom: 48px;
+}
+
+.guide-sitemap-section h3 {
+  color: #1e3a2f;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.guide-sitemap-subtitle {
+  color: #7b8e82;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.guide-sitemap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.guide-sitemap-card {
+  background: #f9fbf9;
+  border: 1px solid #eef3ef;
+  border-radius: 12px;
+  padding: 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-sitemap-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(15, 68, 15, 0.08);
+  border-color: #cde2cd;
+}
+
+.guide-card-icon {
+  font-size: 28px;
+  margin-bottom: 14px;
+}
+
+.guide-sitemap-card h4 {
+  margin-bottom: 10px;
+}
+
+.guide-sitemap-card h4 a {
+  color: #0b8b4d;
+  font-size: 17px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.guide-sitemap-card h4 a:hover {
+  color: #145c32;
+  text-decoration: underline;
+}
+
+.guide-sitemap-card p {
+  color: #53675a;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+/* File đính kèm */
+.guide-file-section {
+  border-top: 1px solid #eef3ef;
+  padding-top: 40px;
+}
+
+.guide-file-section h3 {
+  color: #1e3a2f;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 24px;
+}
+
+.guide-image-container {
+  background: #f9fbf9;
+  border: 1px solid #eef3ef;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.guide-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.guide-image-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.guide-doc-container {
+  background: #f9fbf9;
+  border: 1px solid #eef3ef;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.guide-doc-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.guide-doc-icon {
+  font-size: 40px;
+}
+
+.guide-doc-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-doc-name {
+  color: #1e3a2f;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.guide-doc-hint {
+  color: #7b8e82;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.guide-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Nút bấm */
+.btn-guide-preview,
+.btn-guide-download {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease;
+  border: 0;
+  text-decoration: none;
+}
+
+.btn-guide-preview {
+  background-color: #ffffff;
+  color: #0b8b4d;
+  border: 1px solid #0b8b4d;
+}
+
+.btn-guide-preview:hover {
+  background-color: #f0f7f3;
+}
+
+.btn-guide-preview.active {
+  background-color: #0b8b4d;
+  color: #ffffff;
+}
+
+.btn-guide-download {
+  background-color: #0b8b4d;
+  color: #ffffff;
+}
+
+.btn-guide-download:hover {
+  background-color: #145c32;
+}
+
+/* Iframe Preview */
+.guide-iframe-preview {
+  margin-top: 24px;
+  height: 720px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef3ef;
+  background: white;
+}
+
+.guide-iframe-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Loading */
+.guide-loading {
+  text-align: center;
+  padding: 80px 0;
+  color: #53675a;
+}
+
+.guide-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #eef3ef;
+  border-top-color: #0b8b4d;
+  border-radius: 50%;
+  animation: guideSpin 1s infinite linear;
+  margin: 0 auto 16px;
+}
+
+@keyframes guideSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.guide-generic-file {
+  text-align: center;
+  padding: 30px;
+  background: #f9fbf9;
+  border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .guide-layout {
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+  
+  .guide-content-section {
+    padding: 24px;
+  }
+
+  .guide-title {
+    font-size: 22px;
+  }
+
+  .guide-banner-content h1 {
+    font-size: 28px;
+  }
+  
+  .guide-doc-actions {
+    width: 100%;
+  }
+
+  .btn-guide-preview,
+  .btn-guide-download {
+    width: 100%;
+  }
+
+  .guide-iframe-preview {
+    height: 480px;
+  }
+}

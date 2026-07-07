@@ -15,6 +15,7 @@ import NongNghiep from "./pages/NongNghiep";
 import ThuVien from "./pages/ThuVien";
 import ThuVienDeThi from "./pages/ThuVienDeThi";
 import ThuVienTinTuc from "./pages/ThuVienTinTuc";
+import HuongDanSuDung from "./pages/HuongDanSuDung";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/hoc-lieu/:duongDan" element={<HocLieuTheoChuDe />} />
         <Route path="/hoc-lieu/:duongDan/:materialId" element={<HocLieuChiTiet />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/huong-dan" element={<HuongDanSuDung />} />
       </Routes>
       <FloatingContactButton />
       <BackToTopButton />
