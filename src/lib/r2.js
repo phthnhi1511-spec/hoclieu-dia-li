@@ -165,3 +165,24 @@ export async function resolveR2ObjectUrl(filePath, options = {}) {
 
   return buildR2PublicFileUrl(normalizedPath);
 }
+
+export async function deleteR2File(filePath) {
+  const objectKey = getObjectKey(filePath);
+  if (!objectKey) return;
+
+  const payload = { objectKey };
+
+  try {
+    const { data, error } = import.meta.env.DEV
+      ? { data: await invokeLocalFunction("r2-delete-file", payload), error: null }
+      : await invokeFunction("r2-delete-file", payload);
+
+    if (error) {
+      console.error(`Lỗi xóa file ${objectKey} trên R2:`, error.message);
+    } else {
+      console.log(`Đã xóa file ${objectKey} thành công trên R2.`);
+    }
+  } catch (err) {
+    console.error(`Lỗi hệ thống khi xóa file ${objectKey} trên R2:`, err.message);
+  }
+}

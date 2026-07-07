@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { adminTables } from "../adminTables";
 import { functionsBaseUrl, invokeFunction } from "../lib/functionsClient";
-import { buildR2FileUrl } from "../lib/r2";
+import { buildR2FileUrl, deleteR2File } from "../lib/r2";
 import { parseMediaList } from "../lib/materialUtils";
 import { supabase } from "../lib/supabaseClient";
 import {
@@ -561,6 +561,8 @@ function Admin() {
         payload[activeField.name] = prepareValue(formData[activeField.name], activeField);
       }
 
+      const oldRow = editingId ? rows.find((r) => r.id === editingId) : null;
+
       const request = editingId
         ? supabase.from(selectedTable.name).update(payload).eq("id", editingId)
         : supabase.from(selectedTable.name).insert(payload);
@@ -569,6 +571,42 @@ function Admin() {
 
       if (saveError) {
         throw new Error(saveError.message);
+      }
+
+      // Dọn dẹp tệp tin cũ bị thay thế trên Cloudflare R2
+      if (editingId && oldRow) {
+        for (const field of selectedTable.fields) {
+          const activeField = getActiveField(field);
+          if (activeField.upload) {
+            const oldValue = oldRow[activeField.name];
+            const newValue = payload[activeField.name];
+
+            if (oldValue && newValue !== oldValue) {
+              const oldFiles = parseMediaList(oldValue);
+              const newFilesSet = new Set(parseMediaList(newValue));
+
+              for (const oldFile of oldFiles) {
+                if (!newFilesSet.has(oldFile)) {
+                  await deleteR2File(oldFile);
+                }
+              }
+            }
+          }
+        }
+
+        if (selectedTable.name === "cau_hinh_website") {
+          const isFileKey =
+            oldRow.khoa_cau_hinh === "floating_contact_avatar" ||
+            oldRow.khoa_cau_hinh === "guide_page_file" ||
+            oldRow.khoa_cau_hinh === "hero_image";
+          
+          const oldValue = oldRow.gia_tri_cau_hinh;
+          const newValue = payload.gia_tri_cau_hinh;
+
+          if (isFileKey && oldValue && newValue && newValue !== oldValue) {
+            await deleteR2File(oldValue);
+          }
+        }
       }
 
       setMessage(editingId ? "Đã cập nhật bản ghi." : "Đã thêm bản ghi mới.");
@@ -597,6 +635,28 @@ function Admin() {
     if (deleteError) {
       setError(deleteError.message);
       return;
+    }
+
+    // Dọn dẹp tệp tin cũ trên Cloudflare R2
+    for (const field of selectedTable.fields) {
+      const activeField = getActiveField(field);
+      if (activeField.upload && row[activeField.name]) {
+        const filePaths = parseMediaList(row[activeField.name]);
+        for (const filePath of filePaths) {
+          await deleteR2File(filePath);
+        }
+      }
+    }
+
+    if (selectedTable.name === "cau_hinh_website") {
+      const isFileKey =
+        row.khoa_cau_hinh === "floating_contact_avatar" ||
+        row.khoa_cau_hinh === "guide_page_file" ||
+        row.khoa_cau_hinh === "hero_image";
+      
+      if (isFileKey && row.gia_tri_cau_hinh) {
+        await deleteR2File(row.gia_tri_cau_hinh);
+      }
     }
 
     setMessage(`Đã xóa bản ghi ID ${row.id}.`);
