@@ -146,20 +146,22 @@ export async function resolveR2ObjectUrl(filePath, options = {}) {
   const normalizedPath = String(filePath).replace(/^\/+/, "");
   const expiresIn = Math.max(60, Math.min(Number(options.expiresIn) || 3600, 86400));
 
-  if (!import.meta.env.DEV) {
-    return buildR2PublicFileUrl(normalizedPath);
-  }
-
   try {
-    const data = await invokeLocalFunction("r2-sign-file-url", {
-      objectKey: normalizedPath,
-      expiresIn,
-    });
+    const { data, error } = import.meta.env.DEV
+      ? { data: await invokeLocalFunction("r2-sign-file-url", { objectKey: normalizedPath, expiresIn }), error: null }
+      : await invokeFunction("r2-sign-file-url", { objectKey: normalizedPath, expiresIn });
 
     if (data?.fileUrl) {
       return data.fileUrl;
     }
-  } catch {
+    if (error) {
+      console.error("Lỗi sinh URL có chữ ký từ Edge Function:", error.message);
+    }
+  } catch (err) {
+    console.error("Lỗi hệ thống khi sinh URL có chữ ký:", err.message);
+  }
+
+  if (import.meta.env.DEV) {
     return `${localR2ObjectBaseUrl}/${normalizeObjectPath(normalizedPath)}`;
   }
 
