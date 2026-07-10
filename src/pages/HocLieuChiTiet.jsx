@@ -43,11 +43,57 @@ function PdfPreview({ fileUrl, title }) {
 }
 
 function VideoPreview({ fileUrl }) {
+  const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(fileUrl);
+
+  if (isYoutube) {
+    let videoId = "";
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = fileUrl.match(regExp);
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    }
+
+    if (videoId) {
+      return (
+        <div className="material-detail-video-iframe-wrapper">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title="YouTube video player"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      );
+    }
+  }
+
+  const isDrive = /drive\.google\.com/i.test(fileUrl);
+  if (isDrive) {
+    const embedUrl = fileUrl.replace(/\/view\?usp=drivesdk|\/view$/i, "/preview");
+    return (
+      <div className="material-detail-video-iframe-wrapper">
+        <iframe
+          src={embedUrl}
+          title="Google Drive video player"
+          allow="autoplay"
+          allowFullScreen
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="material-detail-video">
-      <video controls preload="metadata">
+      <video
+        controls
+        preload="metadata"
+        playsInline
+        style={{ width: "100%", maxHeight: "560px", background: "#000", borderRadius: "12px" }}
+      >
         <source src={fileUrl} />
-        Trình duyệt của bạn chưa hỗ trợ phát video này.
+        Trình duyệt của bạn chưa hỗ trợ phát video này trực tiếp.
       </video>
     </div>
   );
@@ -1000,17 +1046,20 @@ function HocLieuChiTiet() {
         buildR2ProxyFileUrl(imagePath),
       );
       const fileExtension = getFileExtension(material.duong_dan_file);
-      const needsOfficeViewerUrl =
-        materialKind === "powerpoint" ||
-        materialKind === "excel" ||
-        (materialKind === "lesson-plan" && fileExtension !== "docx");
+      const isExternalFile = /^https?:\/\//i.test(material.duong_dan_file || "");
+      const needsSignedUrl =
+        !isExternalFile &&
+        (materialKind === "powerpoint" ||
+          materialKind === "excel" ||
+          materialKind === "video" ||
+          (materialKind === "lesson-plan" && fileExtension !== "docx"));
 
       setAssetError("");
       setResolvedFileUrl(nextFileUrl);
       setResolvedImageUrls(nextImageUrls);
       setOfficeFileUrl("");
 
-      if (!needsOfficeViewerUrl) {
+      if (!needsSignedUrl) {
         setAssetLoading(false);
         return;
       }
@@ -1018,13 +1067,17 @@ function HocLieuChiTiet() {
       setAssetLoading(true);
 
       try {
-        const nextOfficeFileUrl = await resolveR2ObjectUrl(material.duong_dan_file, {
+        const signedUrl = await resolveR2ObjectUrl(material.duong_dan_file, {
           expiresIn: 3600,
         });
 
         if (!isMounted) return;
 
-        setOfficeFileUrl(nextOfficeFileUrl);
+        if (materialKind === "video") {
+          setResolvedFileUrl(signedUrl);
+        } else {
+          setOfficeFileUrl(signedUrl);
+        }
       } catch (assetLoadError) {
         if (!isMounted) return;
         setAssetError(assetLoadError?.message || "Không thể chuẩn bị file học liệu này.");
