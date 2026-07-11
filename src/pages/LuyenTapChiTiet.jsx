@@ -49,6 +49,13 @@ function formatDurationLabel(minutes) {
   return `${minutes} phút`;
 }
 
+function formatTimeLeft(seconds) {
+  if (seconds === null || seconds === undefined) return "";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 function buildReviewData(questions, answersByQuestionId) {
   return questions.map((question) => {
     const selectedAnswerId = answersByQuestionId[question.id] || null;
@@ -91,6 +98,33 @@ function LuyenTapChiTiet() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [resultSummary, setResultSummary] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    if (phase !== "quiz" || !quiz?.thoi_gian_lam_bai_phut) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const duration = Number(quiz.thoi_gian_lam_bai_phut) * 60;
+    setTimeLeft(duration);
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === null) return null;
+        return prev > 0 ? prev - 1 : 0;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [phase, quiz]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && phase === "quiz") {
+      alert("Đã hết thời gian làm bài! Hệ thống tự động nộp bài của bạn.");
+      handleSubmitQuiz(true);
+    }
+  }, [timeLeft, phase]);
 
   useEffect(() => {
     let isMounted = true;
@@ -245,12 +279,12 @@ function LuyenTapChiTiet() {
     setActiveQuestionIndex(index);
   }
 
-  async function handleSubmitQuiz() {
+  async function handleSubmitQuiz(isAuto = false) {
     if (submitting || !quiz) return;
 
     const unansweredCount = questions.length - answeredCount;
 
-    if (unansweredCount > 0) {
+    if (!isAuto && unansweredCount > 0) {
       const confirmed = window.confirm(
         `Bạn còn ${unansweredCount} câu chưa trả lời. Vẫn nộp bài và chấm kết quả ngay bây giờ?`,
       );
@@ -444,6 +478,17 @@ function LuyenTapChiTiet() {
                       <span>{participantInfo.tenLop}</span>
                       <span>{formatDurationLabel(quiz.thoi_gian_lam_bai_phut)}</span>
                     </div>
+
+                    {timeLeft !== null ? (
+                      <div className={`quiz-detail-timer ${timeLeft < 60 ? "is-warning" : ""}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="quiz-detail-timer-svg">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span className="quiz-detail-timer-label">Còn lại:</span>
+                        <span className="quiz-detail-timer-clock">{formatTimeLeft(timeLeft)}</span>
+                      </div>
+                    ) : null}
 
                     <div className="quiz-detail-nav-grid">
                       {questions.map((question, index) => {
