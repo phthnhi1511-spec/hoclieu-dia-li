@@ -97,7 +97,7 @@ export const adminTables = [
   {
     fields: [
       { name: "tieu_de", label: "Tiêu đề", required: true },
-      { name: "mo_ta", label: "Mô tả", type: "textarea" },
+      { name: "mo_ta", label: "Yêu cầu cần đạt", type: "textarea" },
       { name: "chu_de_id", label: "Chủ đề", reference: references.chuDe, type: "number" },
       {
         name: "loai_hoc_lieu_id",
