@@ -42,7 +42,7 @@ function PdfPreview({ fileUrl, title }) {
   );
 }
 
-function VideoPreview({ fileUrl }) {
+function VideoPreview({ fileUrl, posterUrl }) {
   const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(fileUrl);
 
   if (isYoutube) {
@@ -90,6 +90,7 @@ function VideoPreview({ fileUrl }) {
         controls
         preload="metadata"
         playsInline
+        poster={posterUrl}
         style={{ width: "100%", maxHeight: "560px", background: "#000", borderRadius: "12px" }}
       >
         <source src={fileUrl} />
@@ -826,7 +827,7 @@ function MaterialDetailPreview({ material, types, fileUrl, imageUrls, officeFile
   }
 
   if (kind === "video") {
-    return <VideoPreview fileUrl={fileUrl} />;
+    return <VideoPreview fileUrl={fileUrl} posterUrl={imageUrls[0]} />;
   }
 
   if (kind === "powerpoint") {
