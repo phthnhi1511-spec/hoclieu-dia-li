@@ -157,6 +157,7 @@ function Admin() {
   const [seedingDefaults, setSeedingDefaults] = useState(false);
   const [materialGuides, setMaterialGuides] = useState([]);
   const [materialQuestions, setMaterialQuestions] = useState([]);
+  const [activeSubformModal, setActiveSubformModal] = useState(null);
   const isEconomicRegionTable = selectedTableName === "vung_kinh_te";
 
   function handleAddGuide() {
@@ -1080,79 +1081,33 @@ function Admin() {
               ))}
 
               {selectedTable.name === "hoc_lieu" ? (
-                <div className="admin-material-subforms">
-                  <div className="admin-subform-section">
-                    <div className="admin-subform-header">
-                      <strong>1. Hướng dẫn khai thác học liệu ({materialGuides.length} ý)</strong>
-                      <button
-                        type="button"
-                        className="admin-secondary-button admin-btn-small"
-                        onClick={handleAddGuide}
-                      >
-                        + Thêm dòng
-                      </button>
+                <div className="admin-material-subforms-summary">
+                  <div className="admin-subform-summary-card">
+                    <div>
+                      <strong>1. Hướng dẫn khai thác ({materialGuides.length} ý)</strong>
+                      <p>{materialGuides.length > 0 ? `${materialGuides.length} ý gạch đầu dòng` : "Chưa có hướng dẫn"}</p>
                     </div>
-
-                    {materialGuides.map((guide, idx) => (
-                      <div key={idx} className="admin-subform-row">
-                        <span className="admin-subform-idx">{idx + 1}.</span>
-                        <input
-                          type="text"
-                          value={guide.noi_dung}
-                          onChange={(e) => handleGuideChange(idx, e.target.value)}
-                          placeholder="Nhập ý hướng dẫn khai thác..."
-                        />
-                        <button
-                          type="button"
-                          className="admin-subform-remove"
-                          onClick={() => handleRemoveGuide(idx)}
-                          title="Xóa dòng này"
-                        >
-                          &times;
-                        </button>
-                      </div>
-                    ))}
+                    <button
+                      type="button"
+                      className="admin-secondary-button admin-btn-small"
+                      onClick={() => setActiveSubformModal("guides")}
+                    >
+                      Quản lý hướng dẫn
+                    </button>
                   </div>
 
-                  <div className="admin-subform-section">
-                    <div className="admin-subform-header">
+                  <div className="admin-subform-summary-card">
+                    <div>
                       <strong>2. Câu hỏi luyện tập ({materialQuestions.length} câu)</strong>
-                      <button
-                        type="button"
-                        className="admin-secondary-button admin-btn-small"
-                        onClick={handleAddQuestion}
-                      >
-                        + Thêm câu hỏi
-                      </button>
+                      <p>{materialQuestions.length > 0 ? `${materialQuestions.length} câu hỏi & gợi ý` : "Chưa có câu hỏi"}</p>
                     </div>
-
-                    {materialQuestions.map((q, idx) => (
-                      <div key={idx} className="admin-subform-card">
-                        <div className="admin-subform-card-head">
-                          <span>Câu {idx + 1}</span>
-                          <button
-                            type="button"
-                            className="admin-subform-remove"
-                            onClick={() => handleRemoveQuestion(idx)}
-                            title="Xóa câu hỏi này"
-                          >
-                            &times;
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={q.noi_dung_cau_hoi}
-                          onChange={(e) => handleQuestionChange(idx, "noi_dung_cau_hoi", e.target.value)}
-                          placeholder="Nội dung câu hỏi luyện tập..."
-                        />
-                        <textarea
-                          rows={2}
-                          value={q.goi_y_dap_an}
-                          onChange={(e) => handleQuestionChange(idx, "goi_y_dap_an", e.target.value)}
-                          placeholder="Gợi ý đáp án (không bắt buộc)..."
-                        />
-                      </div>
-                    ))}
+                    <button
+                      type="button"
+                      className="admin-secondary-button admin-btn-small"
+                      onClick={() => setActiveSubformModal("questions")}
+                    >
+                      Quản lý câu hỏi
+                    </button>
                   </div>
                 </div>
               ) : null}
@@ -1232,6 +1187,144 @@ function Admin() {
           </>
         )}
       </section>
+
+      {activeSubformModal === "guides" ? (
+        <div className="admin-modal-backdrop" onClick={() => setActiveSubformModal(null)}>
+          <div className="admin-modal-dialog admin-subform-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h3>Quản lý Hướng dẫn khai thác học liệu</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setActiveSubformModal(null)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="admin-modal-body">
+              <div className="admin-subform-modal-toolbar">
+                <p>Nhập danh sách các ý hướng dẫn khai thác cho học liệu này.</p>
+                <button
+                  type="button"
+                  className="admin-secondary-button admin-btn-small"
+                  onClick={handleAddGuide}
+                >
+                  + Thêm dòng hướng dẫn
+                </button>
+              </div>
+
+              <div className="admin-subform-modal-list">
+                {materialGuides.map((guide, idx) => (
+                  <div key={idx} className="admin-subform-row">
+                    <span className="admin-subform-idx">{idx + 1}.</span>
+                    <input
+                      type="text"
+                      value={guide.noi_dung}
+                      onChange={(e) => handleGuideChange(idx, e.target.value)}
+                      placeholder="Nhập nội dung ý hướng dẫn khai thác..."
+                    />
+                    <button
+                      type="button"
+                      className="admin-subform-remove"
+                      onClick={() => handleRemoveGuide(idx)}
+                      title="Xóa dòng này"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+                {materialGuides.length === 0 ? (
+                  <div className="admin-empty-subform">Chưa có hướng dẫn khai thác nào. Bấm "+ Thêm dòng hướng dẫn" để bắt đầu.</div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="admin-modal-footer">
+              <button
+                type="button"
+                className="admin-primary-button"
+                onClick={() => setActiveSubformModal(null)}
+              >
+                Hoàn tất ({materialGuides.length} ý)
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeSubformModal === "questions" ? (
+        <div className="admin-modal-backdrop" onClick={() => setActiveSubformModal(null)}>
+          <div className="admin-modal-dialog admin-subform-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h3>Quản lý Câu hỏi luyện tập & Gợi ý đáp án</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setActiveSubformModal(null)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="admin-modal-body">
+              <div className="admin-subform-modal-toolbar">
+                <p>Nhập danh sách câu hỏi luyện tập tự luận kèm theo gợi ý đáp án.</p>
+                <button
+                  type="button"
+                  className="admin-secondary-button admin-btn-small"
+                  onClick={handleAddQuestion}
+                >
+                  + Thêm câu hỏi
+                </button>
+              </div>
+
+              <div className="admin-subform-modal-list">
+                {materialQuestions.map((q, idx) => (
+                  <div key={idx} className="admin-subform-card">
+                    <div className="admin-subform-card-head">
+                      <strong>Câu hỏi {idx + 1}</strong>
+                      <button
+                        type="button"
+                        className="admin-subform-remove"
+                        onClick={() => handleRemoveQuestion(idx)}
+                        title="Xóa câu hỏi này"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={q.noi_dung_cau_hoi}
+                      onChange={(e) => handleQuestionChange(idx, "noi_dung_cau_hoi", e.target.value)}
+                      placeholder="Nội dung câu hỏi luyện tập..."
+                    />
+                    <textarea
+                      rows={2}
+                      value={q.goi_y_dap_an}
+                      onChange={(e) => handleQuestionChange(idx, "goi_y_dap_an", e.target.value)}
+                      placeholder="Gợi ý đáp án (không bắt buộc)..."
+                    />
+                  </div>
+                ))}
+                {materialQuestions.length === 0 ? (
+                  <div className="admin-empty-subform">Chưa có câu hỏi luyện tập nào. Bấm "+ Thêm câu hỏi" để bắt đầu.</div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="admin-modal-footer">
+              <button
+                type="button"
+                className="admin-primary-button"
+                onClick={() => setActiveSubformModal(null)}
+              >
+                Hoàn tất ({materialQuestions.length} câu)
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
