@@ -651,7 +651,7 @@ function Admin() {
         const { data: inserted, error: saveError } = await supabase
           .from(selectedTable.name)
           .insert(payload)
-          .select()
+          .select("id")
           .single();
 
         if (saveError) throw new Error(saveError.message);
@@ -659,29 +659,61 @@ function Admin() {
       }
 
       if (selectedTable.name === "hoc_lieu" && savedId) {
-        await supabase.from("huong_dan_hoc_lieu").delete().eq("hoc_lieu_id", savedId);
+        const targetMaterialId = Number(savedId);
+
+        const { error: delGuideErr } = await supabase
+          .from("huong_dan_hoc_lieu")
+          .delete()
+          .eq("hoc_lieu_id", targetMaterialId);
+
+        if (delGuideErr) {
+          throw new Error(`Lỗi cập nhật hướng dẫn khai thác: ${delGuideErr.message}`);
+        }
+
         const guidesToInsert = materialGuides
           .filter((g) => g.noi_dung && g.noi_dung.trim())
           .map((g, idx) => ({
-            hoc_lieu_id: savedId,
+            hoc_lieu_id: targetMaterialId,
             noi_dung: g.noi_dung.trim(),
             thu_tu_hien_thi: idx + 1,
           }));
+
         if (guidesToInsert.length > 0) {
-          await supabase.from("huong_dan_hoc_lieu").insert(guidesToInsert);
+          const { error: insGuideErr } = await supabase
+            .from("huong_dan_hoc_lieu")
+            .insert(guidesToInsert);
+
+          if (insGuideErr) {
+            throw new Error(`Lỗi thêm hướng dẫn khai thác: ${insGuideErr.message}`);
+          }
         }
 
-        await supabase.from("cau_hoi_hoc_lieu").delete().eq("hoc_lieu_id", savedId);
+        const { error: delQuestErr } = await supabase
+          .from("cau_hoi_hoc_lieu")
+          .delete()
+          .eq("hoc_lieu_id", targetMaterialId);
+
+        if (delQuestErr) {
+          throw new Error(`Lỗi cập nhật câu hỏi luyện tập: ${delQuestErr.message}`);
+        }
+
         const questionsToInsert = materialQuestions
           .filter((q) => q.noi_dung_cau_hoi && q.noi_dung_cau_hoi.trim())
           .map((q, idx) => ({
-            hoc_lieu_id: savedId,
+            hoc_lieu_id: targetMaterialId,
             noi_dung_cau_hoi: q.noi_dung_cau_hoi.trim(),
             goi_y_dap_an: q.goi_y_dap_an ? q.goi_y_dap_an.trim() : null,
             thu_tu_hien_thi: idx + 1,
           }));
+
         if (questionsToInsert.length > 0) {
-          await supabase.from("cau_hoi_hoc_lieu").insert(questionsToInsert);
+          const { error: insQuestErr } = await supabase
+            .from("cau_hoi_hoc_lieu")
+            .insert(questionsToInsert);
+
+          if (insQuestErr) {
+            throw new Error(`Lỗi thêm câu hỏi luyện tập: ${insQuestErr.message}`);
+          }
         }
       }
 

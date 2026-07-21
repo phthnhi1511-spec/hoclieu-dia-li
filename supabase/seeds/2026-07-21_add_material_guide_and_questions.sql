@@ -23,21 +23,17 @@ alter table public.cau_hoi_hoc_lieu enable row level security;
 
 -- Policies cho huong_dan_hoc_lieu
 drop policy if exists "Cho phap doc public huong dan hoc lieu" on public.huong_dan_hoc_lieu;
-create policy "Cho phap doc public huong dan hoc lieu"
-  on public.huong_dan_hoc_lieu for select using (true);
-
 drop policy if exists "Cho phap quan tri vien thay doi huong dan hoc lieu" on public.huong_dan_hoc_lieu;
-create policy "Cho phap quan tri vien thay doi huong dan hoc lieu"
-  on public.huong_dan_hoc_lieu for all using (auth.role() = 'authenticated');
+drop policy if exists "Cho phap tat ca thao tac huong dan hoc lieu" on public.huong_dan_hoc_lieu;
+create policy "Cho phap tat ca thao tac huong dan hoc lieu"
+  on public.huong_dan_hoc_lieu for all using (true) with check (true);
 
 -- Policies cho cau_hoi_hoc_lieu
 drop policy if exists "Cho phap doc public cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
-create policy "Cho phap doc public cau hoi hoc lieu"
-  on public.cau_hoi_hoc_lieu for select using (true);
-
 drop policy if exists "Cho phap quan tri vien thay doi cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
-create policy "Cho phap quan tri vien thay doi cau hoi hoc lieu"
-  on public.cau_hoi_hoc_lieu for all using (auth.role() = 'authenticated');
+drop policy if exists "Cho phap tat ca thao tac cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
+create policy "Cho phap tat ca thao tac cau hoi hoc lieu"
+  on public.cau_hoi_hoc_lieu for all using (true) with check (true);
 
 -- Seed dữ liệu mẫu cho bài Nông nghiệp (ID 32)
 INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
