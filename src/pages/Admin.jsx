@@ -155,7 +155,41 @@ function Admin() {
   const [referenceOptions, setReferenceOptions] = useState({});
   const [uploadFiles, setUploadFiles] = useState({});
   const [seedingDefaults, setSeedingDefaults] = useState(false);
+  const [materialGuides, setMaterialGuides] = useState([]);
+  const [materialQuestions, setMaterialQuestions] = useState([]);
   const isEconomicRegionTable = selectedTableName === "vung_kinh_te";
+
+  function handleAddGuide() {
+    setMaterialGuides((prev) => [...prev, { noi_dung: "" }]);
+  }
+
+  function handleGuideChange(index, value) {
+    setMaterialGuides((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], noi_dung: value };
+      return next;
+    });
+  }
+
+  function handleRemoveGuide(index) {
+    setMaterialGuides((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleAddQuestion() {
+    setMaterialQuestions((prev) => [...prev, { noi_dung_cau_hoi: "", goi_y_dap_an: "" }]);
+  }
+
+  function handleQuestionChange(index, field, value) {
+    setMaterialQuestions((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  }
+
+  function handleRemoveQuestion(index) {
+    setMaterialQuestions((prev) => prev.filter((_, i) => i !== index));
+  }
 
   async function loadRows() {
     setLoading(true);
@@ -424,7 +458,7 @@ function Admin() {
     }));
   }
 
-  function handleEdit(row) {
+  async function handleEdit(row) {
     const nextForm = {};
 
     selectedTable.fields.forEach((field) => {
@@ -442,12 +476,46 @@ function Admin() {
     setUploadFiles({});
     setMessage(`Đang sửa bản ghi ID ${row.id}`);
     setError("");
+
+    if (selectedTable.name === "hoc_lieu") {
+      try {
+        const [{ data: guides }, { data: questions }] = await Promise.all([
+          supabase
+            .from("huong_dan_hoc_lieu")
+            .select("*")
+            .eq("hoc_lieu_id", row.id)
+            .order("thu_tu_hien_thi", { ascending: true }),
+          supabase
+            .from("cau_hoi_hoc_lieu")
+            .select("*")
+            .eq("hoc_lieu_id", row.id)
+            .order("thu_tu_hien_thi", { ascending: true }),
+        ]);
+
+        setMaterialGuides(guides?.map((g) => ({ id: g.id, noi_dung: g.noi_dung || "" })) || []);
+        setMaterialQuestions(
+          questions?.map((q) => ({
+            id: q.id,
+            noi_dung_cau_hoi: q.noi_dung_cau_hoi || "",
+            goi_y_dap_an: q.goi_y_dap_an || "",
+          })) || [],
+        );
+      } catch {
+        setMaterialGuides([]);
+        setMaterialQuestions([]);
+      }
+    } else {
+      setMaterialGuides([]);
+      setMaterialQuestions([]);
+    }
   }
 
   function resetForm() {
     setEditingId(null);
     setFormData(getInitialForm(selectedTable.fields));
     setUploadFiles({});
+    setMaterialGuides([]);
+    setMaterialQuestions([]);
   }
 
   async function uploadFileToCloudflare(field, file) {
@@ -563,14 +631,51 @@ function Admin() {
 
       const oldRow = editingId ? rows.find((r) => r.id === editingId) : null;
 
-      const request = editingId
-        ? supabase.from(selectedTable.name).update(payload).eq("id", editingId)
-        : supabase.from(selectedTable.name).insert(payload);
+      let savedId = editingId;
 
-      const { error: saveError } = await request;
+      if (editingId) {
+        const { error: saveError } = await supabase
+          .from(selectedTable.name)
+          .update(payload)
+          .eq("id", editingId);
 
-      if (saveError) {
-        throw new Error(saveError.message);
+        if (saveError) throw new Error(saveError.message);
+      } else {
+        const { data: inserted, error: saveError } = await supabase
+          .from(selectedTable.name)
+          .insert(payload)
+          .select()
+          .single();
+
+        if (saveError) throw new Error(saveError.message);
+        savedId = inserted?.id;
+      }
+
+      if (selectedTable.name === "hoc_lieu" && savedId) {
+        await supabase.from("huong_dan_hoc_lieu").delete().eq("hoc_lieu_id", savedId);
+        const guidesToInsert = materialGuides
+          .filter((g) => g.noi_dung && g.noi_dung.trim())
+          .map((g, idx) => ({
+            hoc_lieu_id: savedId,
+            noi_dung: g.noi_dung.trim(),
+            thu_tu_hien_thi: idx + 1,
+          }));
+        if (guidesToInsert.length > 0) {
+          await supabase.from("huong_dan_hoc_lieu").insert(guidesToInsert);
+        }
+
+        await supabase.from("cau_hoi_hoc_lieu").delete().eq("hoc_lieu_id", savedId);
+        const questionsToInsert = materialQuestions
+          .filter((q) => q.noi_dung_cau_hoi && q.noi_dung_cau_hoi.trim())
+          .map((q, idx) => ({
+            hoc_lieu_id: savedId,
+            noi_dung_cau_hoi: q.noi_dung_cau_hoi.trim(),
+            goi_y_dap_an: q.goi_y_dap_an ? q.goi_y_dap_an.trim() : null,
+            thu_tu_hien_thi: idx + 1,
+          }));
+        if (questionsToInsert.length > 0) {
+          await supabase.from("cau_hoi_hoc_lieu").insert(questionsToInsert);
+        }
       }
 
       // Dọn dẹp tệp tin cũ bị thay thế trên Cloudflare R2
@@ -973,6 +1078,84 @@ function Admin() {
                   {renderField(field)}
                 </label>
               ))}
+
+              {selectedTable.name === "hoc_lieu" ? (
+                <div className="admin-material-subforms">
+                  <div className="admin-subform-section">
+                    <div className="admin-subform-header">
+                      <strong>1. Hướng dẫn khai thác học liệu ({materialGuides.length} ý)</strong>
+                      <button
+                        type="button"
+                        className="admin-secondary-button admin-btn-small"
+                        onClick={handleAddGuide}
+                      >
+                        + Thêm dòng
+                      </button>
+                    </div>
+
+                    {materialGuides.map((guide, idx) => (
+                      <div key={idx} className="admin-subform-row">
+                        <span className="admin-subform-idx">{idx + 1}.</span>
+                        <input
+                          type="text"
+                          value={guide.noi_dung}
+                          onChange={(e) => handleGuideChange(idx, e.target.value)}
+                          placeholder="Nhập ý hướng dẫn khai thác..."
+                        />
+                        <button
+                          type="button"
+                          className="admin-subform-remove"
+                          onClick={() => handleRemoveGuide(idx)}
+                          title="Xóa dòng này"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="admin-subform-section">
+                    <div className="admin-subform-header">
+                      <strong>2. Câu hỏi luyện tập ({materialQuestions.length} câu)</strong>
+                      <button
+                        type="button"
+                        className="admin-secondary-button admin-btn-small"
+                        onClick={handleAddQuestion}
+                      >
+                        + Thêm câu hỏi
+                      </button>
+                    </div>
+
+                    {materialQuestions.map((q, idx) => (
+                      <div key={idx} className="admin-subform-card">
+                        <div className="admin-subform-card-head">
+                          <span>Câu {idx + 1}</span>
+                          <button
+                            type="button"
+                            className="admin-subform-remove"
+                            onClick={() => handleRemoveQuestion(idx)}
+                            title="Xóa câu hỏi này"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={q.noi_dung_cau_hoi}
+                          onChange={(e) => handleQuestionChange(idx, "noi_dung_cau_hoi", e.target.value)}
+                          placeholder="Nội dung câu hỏi luyện tập..."
+                        />
+                        <textarea
+                          rows={2}
+                          value={q.goi_y_dap_an}
+                          onChange={(e) => handleQuestionChange(idx, "goi_y_dap_an", e.target.value)}
+                          placeholder="Gợi ý đáp án (không bắt buộc)..."
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <button type="submit" disabled={saving}>
                 {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Thêm mới"}

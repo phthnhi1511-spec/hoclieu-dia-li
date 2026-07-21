@@ -54,6 +54,11 @@ const references = {
     labelField: "tieu_de",
     table: "hoc_lieu",
   },
+  huongDanHocLieu: {
+    entityLabel: "hướng dẫn khai thác",
+    labelField: "noi_dung",
+    table: "huong_dan_hoc_lieu",
+  },
 };
 
 export const adminTables = [
@@ -148,17 +153,26 @@ export const adminTables = [
       },
       { name: "ten_nguon", label: "Tên nguồn" },
       { name: "lop", label: "Lớp", type: "number" },
-      {
-        name: "huong_dan_khai_thac",
-        label: "Hướng dẫn khai thác",
-        type: "textarea",
-        helperText: "Nhập mỗi ý hướng dẫn gạch đầu dòng trên một dòng.",
-      },
       { name: "noi_bat", label: "Nổi bật", type: "boolean" },
       ...commonStatusFields,
     ],
     label: "Học liệu",
     name: "hoc_lieu",
+  },
+  {
+    fields: [
+      {
+        name: "hoc_lieu_id",
+        label: "Học liệu liên kết",
+        reference: references.hocLieu,
+        required: true,
+        type: "number",
+      },
+      { name: "noi_dung", label: "Nội dung hướng dẫn", required: true, type: "textarea" },
+      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
+    ],
+    label: "Hướng dẫn khai thác học liệu",
+    name: "huong_dan_hoc_lieu",
   },
   {
     fields: [

@@ -927,17 +927,10 @@ function MaterialDetailSkeleton() {
   );
 }
 
-function MaterialExplorationGuide({ guideText }) {
+function MaterialExplorationGuide({ guides }) {
   const [isOpen, setIsOpen] = useState(true);
 
-  if (!guideText || !guideText.trim()) return null;
-
-  const items = guideText
-    .split("\n")
-    .map((line) => line.replace(/^[-*•\s]+/, "").trim())
-    .filter(Boolean);
-
-  if (items.length === 0) return null;
+  if (!guides || !Array.isArray(guides) || guides.length === 0) return null;
 
   return (
     <section className="material-guide-box">
@@ -966,8 +959,8 @@ function MaterialExplorationGuide({ guideText }) {
       {isOpen ? (
         <div className="material-guide-body">
           <ul className="material-guide-list">
-            {items.map((item, idx) => (
-              <li key={idx}>{item}</li>
+            {guides.map((g, idx) => (
+              <li key={g.id || idx}>{g.noi_dung}</li>
             ))}
           </ul>
         </div>
@@ -1058,6 +1051,7 @@ function HocLieuChiTiet() {
   const [sources, setSources] = useState([]);
   const [material, setMaterial] = useState(null);
   const [practiceQuestions, setPracticeQuestions] = useState([]);
+  const [explorationGuides, setExplorationGuides] = useState([]);
   const [resolvedFileUrl, setResolvedFileUrl] = useState("");
   const [resolvedImageUrls, setResolvedImageUrls] = useState([]);
   const [officeFileUrl, setOfficeFileUrl] = useState("");
@@ -1102,6 +1096,7 @@ function HocLieuChiTiet() {
         sourcesData,
         { data: materialData, error: materialError },
         questionsData,
+        guidesData,
       ] = await Promise.all([
         supabase
           .from("loai_hoc_lieu")
@@ -1134,6 +1129,16 @@ function HocLieuChiTiet() {
             return data || [];
           })
           .catch(() => []),
+        supabase
+          .from("huong_dan_hoc_lieu")
+          .select("*")
+          .eq("hoc_lieu_id", Number(materialId))
+          .order("thu_tu_hien_thi", { ascending: true })
+          .then(({ data, error }) => {
+            if (error) return [];
+            return data || [];
+          })
+          .catch(() => []),
       ]);
 
       if (!isMounted) return;
@@ -1150,6 +1155,7 @@ function HocLieuChiTiet() {
         setSources(sourcesData || []);
         setMaterial(materialData);
         setPracticeQuestions(questionsData || []);
+        setExplorationGuides(guidesData || []);
       }
 
       setLoading(false);
@@ -1348,7 +1354,7 @@ function HocLieuChiTiet() {
             </section>
 
             <section className="material-detail-extra-sections">
-              <MaterialExplorationGuide guideText={material?.huong_dan_khai_thac} />
+              <MaterialExplorationGuide guides={explorationGuides} />
               <MaterialPracticeQuestions questions={practiceQuestions} />
             </section>
           </>
