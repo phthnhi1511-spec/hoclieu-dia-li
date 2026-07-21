@@ -976,45 +976,11 @@ function MaterialExplorationGuide({ guideText }) {
   );
 }
 
-function MaterialPracticeQuestions({ questionsData }) {
+function MaterialPracticeQuestions({ questions }) {
   const [isOpen, setIsOpen] = useState(true);
   const [openHintIndex, setOpenHintIndex] = useState({});
 
-  if (!questionsData) return null;
-
-  let parsedQuestions = [];
-  if (typeof questionsData === "string") {
-    try {
-      const json = JSON.parse(questionsData);
-      if (Array.isArray(json)) {
-        parsedQuestions = json.map((q) => ({
-          question: q.cau_hoi || q.question || "",
-          hint: q.goi_y || q.hint || "",
-        }));
-      }
-    } catch {
-      parsedQuestions = questionsData
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line) => {
-          const parts = line.split(":::");
-          return {
-            question: parts[0]?.trim() || "",
-            hint: parts[1]?.trim() || "",
-          };
-        });
-    }
-  } else if (Array.isArray(questionsData)) {
-    parsedQuestions = questionsData.map((q) => ({
-      question: q.cau_hoi || q.question || "",
-      hint: q.goi_y || q.hint || "",
-    }));
-  }
-
-  parsedQuestions = parsedQuestions.filter((q) => q.question);
-
-  if (parsedQuestions.length === 0) return null;
+  if (!questions || !Array.isArray(questions) || questions.length === 0) return null;
 
   const toggleHint = (index) => {
     setOpenHintIndex((prev) => ({
@@ -1048,18 +1014,18 @@ function MaterialPracticeQuestions({ questionsData }) {
 
       {isOpen ? (
         <div className="material-questions-body">
-          {parsedQuestions.map((q, idx) => {
+          {questions.map((q, idx) => {
             const isHintOpen = Boolean(openHintIndex[idx]);
 
             return (
-              <div key={idx} className="material-question-item">
+              <div key={q.id || idx} className="material-question-item">
                 <div className="material-question-row">
                   <div className="material-question-left">
                     <span className="material-question-number">{idx + 1}</span>
-                    <span className="material-question-text">{q.question}</span>
+                    <span className="material-question-text">{q.noi_dung_cau_hoi}</span>
                   </div>
 
-                  {q.hint ? (
+                  {q.goi_y_dap_an ? (
                     <button
                       type="button"
                       className="material-hint-button"
@@ -1070,10 +1036,10 @@ function MaterialPracticeQuestions({ questionsData }) {
                   ) : null}
                 </div>
 
-                {q.hint && isHintOpen ? (
+                {q.goi_y_dap_an && isHintOpen ? (
                   <div className="material-hint-box">
                     <strong>Gợi ý đáp án:</strong>
-                    <p>{q.hint}</p>
+                    <p>{q.goi_y_dap_an}</p>
                   </div>
                 ) : null}
               </div>
@@ -1091,6 +1057,7 @@ function HocLieuChiTiet() {
   const [types, setTypes] = useState([]);
   const [sources, setSources] = useState([]);
   const [material, setMaterial] = useState(null);
+  const [practiceQuestions, setPracticeQuestions] = useState([]);
   const [resolvedFileUrl, setResolvedFileUrl] = useState("");
   const [resolvedImageUrls, setResolvedImageUrls] = useState([]);
   const [officeFileUrl, setOfficeFileUrl] = useState("");
@@ -1134,6 +1101,7 @@ function HocLieuChiTiet() {
         { data: typeData, error: typeError },
         sourcesData,
         { data: materialData, error: materialError },
+        questionsData,
       ] = await Promise.all([
         supabase
           .from("loai_hoc_lieu")
@@ -1156,6 +1124,16 @@ function HocLieuChiTiet() {
           .eq("chu_de_id", topicData.id)
           .eq("da_xuat_ban", true)
           .maybeSingle(),
+        supabase
+          .from("cau_hoi_hoc_lieu")
+          .select("*")
+          .eq("hoc_lieu_id", Number(materialId))
+          .order("thu_tu_hien_thi", { ascending: true })
+          .then(({ data, error }) => {
+            if (error) return [];
+            return data || [];
+          })
+          .catch(() => []),
       ]);
 
       if (!isMounted) return;
@@ -1171,6 +1149,7 @@ function HocLieuChiTiet() {
         setTypes(typeData || []);
         setSources(sourcesData || []);
         setMaterial(materialData);
+        setPracticeQuestions(questionsData || []);
       }
 
       setLoading(false);
@@ -1370,7 +1349,7 @@ function HocLieuChiTiet() {
 
             <section className="material-detail-extra-sections">
               <MaterialExplorationGuide guideText={material?.huong_dan_khai_thac} />
-              <MaterialPracticeQuestions questionsData={material?.cau_hoi_luyen_tap} />
+              <MaterialPracticeQuestions questions={practiceQuestions} />
             </section>
           </>
         )}

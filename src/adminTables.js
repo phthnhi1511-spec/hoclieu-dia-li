@@ -49,6 +49,11 @@ const references = {
     labelField: "ten_nguon",
     table: "nguon_hoc_lieu",
   },
+  hocLieu: {
+    entityLabel: "học liệu",
+    labelField: "tieu_de",
+    table: "hoc_lieu",
+  },
 };
 
 export const adminTables = [
@@ -149,17 +154,27 @@ export const adminTables = [
         type: "textarea",
         helperText: "Nhập mỗi ý hướng dẫn gạch đầu dòng trên một dòng.",
       },
-      {
-        name: "cau_hoi_luyen_tap",
-        label: "Câu hỏi luyện tập & Gợi ý",
-        type: "textarea",
-        helperText: "Nhập mỗi câu hỏi một dòng. Để thêm gợi ý đáp án, nhập dạng: Nội dung câu hỏi ::: Gợi ý đáp án (hoặc dán mảng JSON)",
-      },
       { name: "noi_bat", label: "Nổi bật", type: "boolean" },
       ...commonStatusFields,
     ],
     label: "Học liệu",
     name: "hoc_lieu",
+  },
+  {
+    fields: [
+      {
+        name: "hoc_lieu_id",
+        label: "Học liệu liên kết",
+        reference: references.hocLieu,
+        required: true,
+        type: "number",
+      },
+      { name: "noi_dung_cau_hoi", label: "Nội dung câu hỏi", required: true, type: "textarea" },
+      { name: "goi_y_dap_an", label: "Gợi ý đáp án", type: "textarea" },
+      { name: "thu_tu_hien_thi", label: "Thứ tự hiển thị", type: "number" },
+    ],
+    label: "Câu hỏi luyện tập học liệu",
+    name: "cau_hoi_hoc_lieu",
   },
   {
     fields: [
