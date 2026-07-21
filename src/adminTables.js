@@ -143,6 +143,18 @@ export const adminTables = [
       },
       { name: "ten_nguon", label: "Tên nguồn" },
       { name: "lop", label: "Lớp", type: "number" },
+      {
+        name: "huong_dan_khai_thac",
+        label: "Hướng dẫn khai thác",
+        type: "textarea",
+        helperText: "Nhập mỗi ý hướng dẫn gạch đầu dòng trên một dòng.",
+      },
+      {
+        name: "cau_hoi_luyen_tap",
+        label: "Câu hỏi luyện tập & Gợi ý",
+        type: "textarea",
+        helperText: "Nhập mỗi câu hỏi một dòng. Để thêm gợi ý đáp án, nhập dạng: Nội dung câu hỏi ::: Gợi ý đáp án (hoặc dán mảng JSON)",
+      },
       { name: "noi_bat", label: "Nổi bật", type: "boolean" },
       ...commonStatusFields,
     ],

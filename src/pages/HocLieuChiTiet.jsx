@@ -927,6 +927,164 @@ function MaterialDetailSkeleton() {
   );
 }
 
+function MaterialExplorationGuide({ guideText }) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  if (!guideText || !guideText.trim()) return null;
+
+  const items = guideText
+    .split("\n")
+    .map((line) => line.replace(/^[-*•\s]+/, "").trim())
+    .filter(Boolean);
+
+  if (items.length === 0) return null;
+
+  return (
+    <section className="material-guide-box">
+      <button
+        type="button"
+        className="material-guide-header"
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <div className="material-guide-title">
+          <span className="material-guide-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+              <path d="M9 18h6"/>
+              <path d="M10 22h4"/>
+            </svg>
+          </span>
+          <span>HƯỚNG DẪN KHAI THÁC</span>
+        </div>
+        <span className={`material-accordion-arrow ${isOpen ? "is-open" : ""}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </button>
+
+      {isOpen ? (
+        <div className="material-guide-body">
+          <ul className="material-guide-list">
+            {items.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function MaterialPracticeQuestions({ questionsData }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const [openHintIndex, setOpenHintIndex] = useState({});
+
+  if (!questionsData) return null;
+
+  let parsedQuestions = [];
+  if (typeof questionsData === "string") {
+    try {
+      const json = JSON.parse(questionsData);
+      if (Array.isArray(json)) {
+        parsedQuestions = json.map((q) => ({
+          question: q.cau_hoi || q.question || "",
+          hint: q.goi_y || q.hint || "",
+        }));
+      }
+    } catch {
+      parsedQuestions = questionsData
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split(":::");
+          return {
+            question: parts[0]?.trim() || "",
+            hint: parts[1]?.trim() || "",
+          };
+        });
+    }
+  } else if (Array.isArray(questionsData)) {
+    parsedQuestions = questionsData.map((q) => ({
+      question: q.cau_hoi || q.question || "",
+      hint: q.goi_y || q.hint || "",
+    }));
+  }
+
+  parsedQuestions = parsedQuestions.filter((q) => q.question);
+
+  if (parsedQuestions.length === 0) return null;
+
+  const toggleHint = (index) => {
+    setOpenHintIndex((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
+  return (
+    <section className="material-questions-box">
+      <button
+        type="button"
+        className="material-questions-header"
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <div className="material-questions-title">
+          <span className="material-questions-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </span>
+          <span>CÂU HỎI LUYỆN TẬP</span>
+        </div>
+        <span className={`material-accordion-arrow ${isOpen ? "is-open" : ""}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </button>
+
+      {isOpen ? (
+        <div className="material-questions-body">
+          {parsedQuestions.map((q, idx) => {
+            const isHintOpen = Boolean(openHintIndex[idx]);
+
+            return (
+              <div key={idx} className="material-question-item">
+                <div className="material-question-row">
+                  <div className="material-question-left">
+                    <span className="material-question-number">{idx + 1}</span>
+                    <span className="material-question-text">{q.question}</span>
+                  </div>
+
+                  {q.hint ? (
+                    <button
+                      type="button"
+                      className="material-hint-button"
+                      onClick={() => toggleHint(idx)}
+                    >
+                      {isHintOpen ? "Ẩn gợi ý" : "Hiện gợi ý"}
+                    </button>
+                  ) : null}
+                </div>
+
+                {q.hint && isHintOpen ? (
+                  <div className="material-hint-box">
+                    <strong>Gợi ý đáp án:</strong>
+                    <p>{q.hint}</p>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function HocLieuChiTiet() {
   const { duongDan, materialId } = useParams();
   const [topic, setTopic] = useState(null);
@@ -1208,6 +1366,11 @@ function HocLieuChiTiet() {
                   officeFileUrl={officeFileUrl}
                 />
               )}
+            </section>
+
+            <section className="material-detail-extra-sections">
+              <MaterialExplorationGuide guideText={material?.huong_dan_khai_thac} />
+              <MaterialPracticeQuestions questionsData={material?.cau_hoi_luyen_tap} />
             </section>
           </>
         )}

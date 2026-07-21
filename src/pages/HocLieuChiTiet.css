@@ -902,3 +902,248 @@
   height: 100%;
   border: 0;
 }
+
+/* Custom extra sections: Huong dan khai thac & Cau hoi luyen tap */
+.material-detail-extra-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1120px;
+  margin: 24px auto 0;
+  padding: 0 20px;
+}
+
+/* 1. Hướng dẫn khai thác (Green Theme) */
+.material-guide-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.material-guide-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.material-guide-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #15803d;
+  letter-spacing: 0.02em;
+}
+
+.material-guide-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #15803d;
+  color: #ffffff;
+}
+
+.material-accordion-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #15803d;
+  transition: transform 0.25s ease;
+}
+
+.material-accordion-arrow.is-open {
+  transform: rotate(180deg);
+}
+
+.material-guide-body {
+  padding: 0 20px 20px 64px;
+  border-top: 1px solid #f1f5f9;
+  background: #fbfdfb;
+}
+
+.material-guide-list {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  list-style-type: disc;
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.material-guide-list li {
+  margin-bottom: 8px;
+}
+
+.material-guide-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* 2. Câu hỏi luyện tập (Blue Theme) */
+.material-questions-box {
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.material-questions-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.material-questions-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1d4ed8;
+  letter-spacing: 0.02em;
+}
+
+.material-questions-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.material-questions-header .material-accordion-arrow {
+  color: #1d4ed8;
+}
+
+.material-questions-body {
+  padding: 8px 20px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.material-question-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.material-question-item:last-child {
+  border-bottom: none;
+}
+
+.material-question-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.material-question-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.material-question-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.material-question-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.material-hint-button {
+  background: #ffffff;
+  border: 1px solid #93c5fd;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.material-hint-button:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.material-hint-box {
+  margin-top: 12px;
+  margin-left: 38px;
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-left: 4px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.material-hint-box strong {
+  display: block;
+  color: #1e3a8a;
+  margin-bottom: 4px;
+}
+
+.material-hint-box p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .material-guide-body {
+    padding-left: 20px;
+  }
+
+  .material-question-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .material-hint-button {
+    align-self: flex-end;
+  }
+
+  .material-hint-box {
+    margin-left: 0;
+  }
+}
