@@ -18,22 +18,26 @@ create table if not exists public.cau_hoi_hoc_lieu (
 );
 
 -- 3. Cấu hình Row Level Security (RLS)
+alter table public.huong_dan_hoc_lieu disable row level security;
+alter table public.cau_hoi_hoc_lieu disable row level security;
+
+-- Hoặc nếu dự án yêu cầu giữ RLS, khởi tạo Policy mở cho phép thao tác:
 alter table public.huong_dan_hoc_lieu enable row level security;
 alter table public.cau_hoi_hoc_lieu enable row level security;
 
--- Policies cho huong_dan_hoc_lieu
 drop policy if exists "Cho phap doc public huong dan hoc lieu" on public.huong_dan_hoc_lieu;
 drop policy if exists "Cho phap quan tri vien thay doi huong dan hoc lieu" on public.huong_dan_hoc_lieu;
 drop policy if exists "Cho phap tat ca thao tac huong dan hoc lieu" on public.huong_dan_hoc_lieu;
-create policy "Cho phap tat ca thao tac huong dan hoc lieu"
-  on public.huong_dan_hoc_lieu for all using (true) with check (true);
+drop policy if exists "Full access huong_dan_hoc_lieu" on public.huong_dan_hoc_lieu;
+create policy "Full access huong_dan_hoc_lieu"
+  on public.huong_dan_hoc_lieu for all to public using (true) with check (true);
 
--- Policies cho cau_hoi_hoc_lieu
 drop policy if exists "Cho phap doc public cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
 drop policy if exists "Cho phap quan tri vien thay doi cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
 drop policy if exists "Cho phap tat ca thao tac cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
-create policy "Cho phap tat ca thao tac cau hoi hoc lieu"
-  on public.cau_hoi_hoc_lieu for all using (true) with check (true);
+drop policy if exists "Full access cau_hoi_hoc_lieu" on public.cau_hoi_hoc_lieu;
+create policy "Full access cau_hoi_hoc_lieu"
+  on public.cau_hoi_hoc_lieu for all to public using (true) with check (true);
 
 -- Seed dữ liệu mẫu cho bài Nông nghiệp (ID 32)
 INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
