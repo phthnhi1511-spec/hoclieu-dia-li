@@ -730,41 +730,21 @@
   color: #64748b;
 }
 
-.admin-subform-modal {
-  max-width: 680px !important;
-  width: 90vw;
-}
-
-.admin-subform-modal-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.admin-subform-modal-toolbar p {
-  margin: 0;
-  font-size: 14px;
-  color: #64748b;
-}
-
-.admin-subform-modal-list {
+.admin-subform-modal-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 55vh;
-  overflow-y: auto;
-  padding-right: 4px;
+  margin-top: 18px;
 }
 
-.admin-empty-subform {
-  padding: 24px;
-  text-align: center;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  color: #64748b;
-  font-size: 14px;
+.admin-subform-card-item {
+  background: #ffffff;
+  border: 1px solid #dce7df;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .admin-subform-header strong {
