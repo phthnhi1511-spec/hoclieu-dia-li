@@ -173,7 +173,10 @@ function Admin() {
   }
 
   function handleRemoveGuide(index) {
-    setMaterialGuides((prev) => prev.filter((_, i) => i !== index));
+    const confirmed = window.confirm("Bạn có chắc chắn muốn xóa dòng hướng dẫn này?");
+    if (confirmed) {
+      setMaterialGuides((prev) => prev.filter((_, i) => i !== index));
+    }
   }
 
   function handleAddQuestion() {
@@ -189,7 +192,10 @@ function Admin() {
   }
 
   function handleRemoveQuestion(index) {
-    setMaterialQuestions((prev) => prev.filter((_, i) => i !== index));
+    const confirmed = window.confirm("Bạn có chắc chắn muốn xóa câu hỏi luyện tập này?");
+    if (confirmed) {
+      setMaterialQuestions((prev) => prev.filter((_, i) => i !== index));
+    }
   }
 
   async function loadRows() {
@@ -1189,17 +1195,17 @@ function Admin() {
       </section>
 
       {activeSubformModal === "guides" ? (
-        <div className="admin-modal-backdrop" role="presentation" onClick={() => setActiveSubformModal(null)}>
+        <div className="admin-modal-backdrop" role="presentation">
           <section
-            className="admin-modal admin-results-modal"
+            className="admin-subform-modal-container"
             role="dialog"
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="admin-panel-title admin-panel-title-wide">
+            <div className="admin-subform-modal-header">
               <div>
                 <h2>Hướng dẫn khai thác học liệu</h2>
-                <p>Danh sách các ý gạch đầu dòng hướng dẫn khai thác cho học liệu này</p>
+                <p>Quản lý danh sách các ý gạch đầu dòng hướng dẫn khai thác</p>
               </div>
 
               <div className="admin-quiz-builder-actions">
@@ -1212,10 +1218,11 @@ function Admin() {
                 </button>
                 <button
                   type="button"
-                  className="admin-secondary-button"
+                  className="admin-modal-close-red"
                   onClick={() => setActiveSubformModal(null)}
+                  title="Đóng modal"
                 >
-                  Đóng & Hoàn tất
+                  &times;
                 </button>
               </div>
             </div>
@@ -1244,22 +1251,32 @@ function Admin() {
                 <p className="admin-empty">Chưa có hướng dẫn khai thác nào. Bấm "+ Thêm dòng hướng dẫn" để bắt đầu.</p>
               ) : null}
             </div>
+
+            <div className="admin-subform-modal-footer">
+              <button
+                type="button"
+                className="admin-secondary-button"
+                onClick={() => setActiveSubformModal(null)}
+              >
+                Đóng & Hoàn tất
+              </button>
+            </div>
           </section>
         </div>
       ) : null}
 
       {activeSubformModal === "questions" ? (
-        <div className="admin-modal-backdrop" role="presentation" onClick={() => setActiveSubformModal(null)}>
+        <div className="admin-modal-backdrop" role="presentation">
           <section
-            className="admin-modal admin-results-modal"
+            className="admin-subform-modal-container"
             role="dialog"
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="admin-panel-title admin-panel-title-wide">
+            <div className="admin-subform-modal-header">
               <div>
                 <h2>Câu hỏi luyện tập & Gợi ý đáp án</h2>
-                <p>Danh sách các câu hỏi tự luận kèm gợi ý đáp án thuộc học liệu này</p>
+                <p>Quản lý các câu hỏi tự luận kèm gợi ý đáp án thuộc học liệu này</p>
               </div>
 
               <div className="admin-quiz-builder-actions">
@@ -1272,10 +1289,11 @@ function Admin() {
                 </button>
                 <button
                   type="button"
-                  className="admin-secondary-button"
+                  className="admin-modal-close-red"
                   onClick={() => setActiveSubformModal(null)}
+                  title="Đóng modal"
                 >
-                  Đóng & Hoàn tất
+                  &times;
                 </button>
               </div>
             </div>
@@ -1316,6 +1334,16 @@ function Admin() {
               {materialQuestions.length === 0 ? (
                 <p className="admin-empty">Chưa có câu hỏi luyện tập nào. Bấm "+ Thêm câu hỏi" để bắt đầu.</p>
               ) : null}
+            </div>
+
+            <div className="admin-subform-modal-footer">
+              <button
+                type="button"
+                className="admin-secondary-button"
+                onClick={() => setActiveSubformModal(null)}
+              >
+                Đóng & Hoàn tất
+              </button>
             </div>
           </section>
         </div>
