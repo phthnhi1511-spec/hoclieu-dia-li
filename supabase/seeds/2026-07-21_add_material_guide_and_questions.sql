@@ -38,3 +38,40 @@ create policy "Cho phap doc public cau hoi hoc lieu"
 drop policy if exists "Cho phap quan tri vien thay doi cau hoi hoc lieu" on public.cau_hoi_hoc_lieu;
 create policy "Cho phap quan tri vien thay doi cau hoi hoc lieu"
   on public.cau_hoi_hoc_lieu for all using (auth.role() = 'authenticated');
+
+-- Seed dữ liệu mẫu cho bài Nông nghiệp (ID 32)
+INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
+SELECT id, 'Đọc tên bảng số liệu để xác định nội dung cần khai thác.', 1 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
+SELECT id, 'Xác định đơn vị tính của diện tích và sản lượng.', 2 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
+SELECT id, 'Quan sát số liệu qua các năm, so sánh năm đầu và năm cuối.', 3 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
+SELECT id, 'Nhận xét sự thay đổi của diện tích gieo trồng và sản lượng lúa.', 4 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.huong_dan_hoc_lieu (hoc_lieu_id, noi_dung, thu_tu_hien_thi)
+SELECT id, 'Giải thích nguyên nhân của sự thay đổi.', 5 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.cau_hoi_hoc_lieu (hoc_lieu_id, noi_dung_cau_hoi, goi_y_dap_an, thu_tu_hien_thi)
+SELECT id, 'Nhận xét sự thay đổi diện tích gieo trồng lúa của nước ta giai đoạn 2000 - 2024.', 'Diện tích gieo trồng lúa nhìn chung có xu hướng giảm nhẹ qua các năm do chuyển đổi mục đích sử dụng đất sang cây công nghiệp và nuôi trồng thủy sản.', 1 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.cau_hoi_hoc_lieu (hoc_lieu_id, noi_dung_cau_hoi, goi_y_dap_an, thu_tu_hien_thi)
+SELECT id, 'Nhận xét sự thay đổi sản lượng lúa của nước ta giai đoạn 2000 - 2024.', 'Sản lượng lúa tăng liên tục nhờ áp dụng tiến bộ khoa học kỹ thuật, giống mới và tăng năng suất.', 2 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.cau_hoi_hoc_lieu (hoc_lieu_id, noi_dung_cau_hoi, goi_y_dap_an, thu_tu_hien_thi)
+SELECT id, 'Giải thích vì sao diện tích gieo trồng lúa giảm nhưng sản lượng lúa vẫn tăng.', 'Do tăng năng suất lúa (thâm canh, cơ giới hóa, giống lúa chất lượng cao) bù đắp cho sự sụt giảm về diện tích.', 3 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.cau_hoi_hoc_lieu (hoc_lieu_id, noi_dung_cau_hoi, goi_y_dap_an, thu_tu_hien_thi)
+SELECT id, 'Theo em, sự thay đổi đó phản ánh điều gì về nền nông nghiệp nước ta?', 'Phản ánh nền nông nghiệp nước ta đang chuyển dịch mạnh mẽ theo hướng thâm canh, gia tăng giá trị và trình độ khoa học công nghệ cao.', 4 FROM public.hoc_lieu WHERE id = 32
+ON CONFLICT DO NOTHING;
