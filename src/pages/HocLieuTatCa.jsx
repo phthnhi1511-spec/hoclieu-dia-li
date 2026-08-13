@@ -125,7 +125,7 @@ function MaterialsPagination({ currentPage, totalPages, onPageChange }) {
             className={page === currentPage ? "is-active" : ""}
             onClick={() => onPageChange(page)}
           >
-            {page}
+            {page} 
           </button>
         ))}
       </div>
