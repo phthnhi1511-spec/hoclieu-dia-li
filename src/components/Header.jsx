@@ -85,7 +85,7 @@ function Header() {
     <header className={`site-header${isMenuVisible ? " is-menu-open" : ""}`}>
       <Link to="/" className="site-logo" onClick={closeMenu}>
         <span className="site-logo-icon">🌎</span>
-        <span>HỌC LIỆU ĐỊA LÍ KINH TẾ VIỆT NAM</span>
+        <span>HỌC LIỆU SỐ ĐỊA LÍ CÁC NGÀNH KINH TẾ VIỆT NAM</span>
       </Link>
 
       <button
