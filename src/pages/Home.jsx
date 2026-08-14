@@ -264,7 +264,7 @@ function Home() {
         <section className="home-section home-intro-section">
           <SectionHeading
             title="Giới thiệu website"
-            description="Website Học liệu số Địa lí Kinh tế Việt Nam được xây dựng nhằm hỗ trợ học sinh học tập, khám phá kiến thức và phát triển năng lực địa lí thông qua hệ thống bản đồ, video, trò chơi học tập, biểu đồ và nhiều học liệu trực quan khác."
+            description="Website Học liệu số Địa lí các ngành kinh tế Việt Nam được xây dựng nhằm hỗ trợ học sinh học tập, khám phá kiến thức và phát triển năng lực địa lí thông qua hệ thống bản đồ, video, trò chơi học tập, biểu đồ và nhiều học liệu trực quan khác."
           />
 
           <div className="home-capability-grid">
