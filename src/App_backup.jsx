@@ -21,7 +21,7 @@ function App() {
       color: "white",
     }}
   >
-    HỌC LIỆU ĐỊA LÍ KINH TẾ VIỆT NAM
+    HỌC LIỆU SỐ ĐỊA LÍ CÁC NGÀNH KINH TẾ VIỆT NAM
   </div>
 </div>
         <nav
