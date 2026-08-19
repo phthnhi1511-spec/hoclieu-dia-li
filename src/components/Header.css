@@ -3,11 +3,13 @@
   background: #0f440f;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 12px 20px;
   position: sticky;
   top: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: 1000;
 }
 
@@ -15,15 +17,22 @@
   align-items: center;
   color: #ffffff;
   display: flex;
-  gap: 10px;
-  font-size: 18px;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 800;
   text-decoration: none;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.site-logo span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .site-logo-icon {
-  font-size: 34px;
+  font-size: 32px;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -38,8 +47,9 @@
   color: #ffffff;
   display: flex;
   flex-wrap: nowrap;
-  gap: 16px;
+  gap: 12px;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .site-nav a,
@@ -48,6 +58,7 @@
   color: #ffffff;
   cursor: pointer;
   font: inherit;
+  font-size: 14px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -113,7 +124,7 @@
   color: #607166;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 992px) {
   .site-header {
     align-items: center;
     flex-wrap: wrap;

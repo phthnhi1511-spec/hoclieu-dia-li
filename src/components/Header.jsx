@@ -57,7 +57,7 @@ function Header() {
     }
 
     function handleResize() {
-      if (window.innerWidth > 900) closeMobileMenu();
+      if (window.innerWidth > 992) closeMobileMenu();
     }
 
     window.addEventListener("keydown", handleKeyDown);
