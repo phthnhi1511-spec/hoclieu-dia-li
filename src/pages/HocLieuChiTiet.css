@@ -942,6 +942,7 @@
   color: #1e293b;
   font-size: 15px;
   font-weight: 500;
+  white-space: pre-line;
 }
 
 .material-hint-button {
@@ -983,6 +984,7 @@
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
+  white-space: pre-line;
 }
 
 @keyframes atlatTurnNext {

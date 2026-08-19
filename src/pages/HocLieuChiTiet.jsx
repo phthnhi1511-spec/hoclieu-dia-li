@@ -1015,7 +1015,7 @@ function MaterialPracticeQuestions({ questions }) {
                 <div className="material-question-row">
                   <div className="material-question-left">
                     <span className="material-question-number">{idx + 1}</span>
-                    <span className="material-question-text">{q.noi_dung_cau_hoi}</span>
+                    <span className="material-question-text" style={{ whiteSpace: "pre-line" }}>{q.noi_dung_cau_hoi}</span>
                   </div>
 
                   {q.goi_y_dap_an ? (
@@ -1032,7 +1032,7 @@ function MaterialPracticeQuestions({ questions }) {
                 {q.goi_y_dap_an && isHintOpen ? (
                   <div className="material-hint-box">
                     <strong>Gợi ý đáp án:</strong>
-                    <p>{q.goi_y_dap_an}</p>
+                    <p style={{ whiteSpace: "pre-line" }}>{q.goi_y_dap_an}</p>
                   </div>
                 ) : null}
               </div>
