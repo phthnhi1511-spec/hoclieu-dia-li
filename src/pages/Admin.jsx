@@ -37,10 +37,10 @@ function getInitialForm(fields) {
   return fields.reduce((values, field) => {
     if (field.defaultValue !== undefined) {
       values[field.name] = field.defaultValue;
-    } else if (field.name === "da_xuat_ban") {
+    } else if (field.type === "boolean") {
       values[field.name] = true;
     } else {
-      values[field.name] = field.type === "boolean" ? false : "";
+      values[field.name] = "";
     }
 
     return values;
