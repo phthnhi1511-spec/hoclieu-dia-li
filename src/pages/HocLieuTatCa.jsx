@@ -12,7 +12,7 @@ const SKELETON_CARD_COUNT = 6;
 function MaterialListCard({ activityById, material, topicById, types, sourceById }) {
   const typeName = getTypeName(material, types);
   const topic = topicById.get(material.chu_de_id);
-  const detailPath = topic?.duong_dan ? `/hoc-lieu/${topic.duong_dan}/${material.id}` : "/hoc-lieu";
+  const detailPath = `/hoc-lieu/${topic?.duong_dan || "du-lieu"}/${material.id}`;
   const imageList = parseMediaList(material.duong_dan_anh_dai_dien);
   const thumbnailUrl = imageList[0] ? buildR2ProxyFileUrl(imageList[0]) : "";
   const materialKind = getMaterialKind(material, types);

@@ -1070,28 +1070,13 @@ function HocLieuChiTiet() {
       setError("");
       setTopic(null);
       setMaterial(null);
-
-      const { data: topicData, error: topicError } = await supabase
-        .from("chu_de")
-        .select("id, ten_chu_de, duong_dan, mo_ta")
-        .eq("duong_dan", duongDan)
-        .maybeSingle();
-
-      if (!isMounted) return;
-
-      if (topicError) {
-        setError(`Lỗi tải chủ đề: ${topicError.message}`);
-        setLoading(false);
-        return;
-      }
-
-      if (!topicData) {
-        setError("Không tìm thấy chủ đề học liệu.");
-        setLoading(false);
-        return;
-      }
+      setTypes([]);
+      setSources([]);
+      setPracticeQuestions([]);
+      setExplorationGuides([]);
 
       const [
+        { data: topicData },
         { data: typeData, error: typeError },
         sourcesData,
         { data: materialData, error: materialError },
@@ -1099,13 +1084,18 @@ function HocLieuChiTiet() {
         guidesData,
       ] = await Promise.all([
         supabase
+          .from("chu_de")
+          .select("id, ten_chu_de, duong_dan, mo_ta")
+          .eq("duong_dan", duongDan)
+          .maybeSingle(),
+        supabase
           .from("loai_hoc_lieu")
           .select("id, ten_loai, duong_dan")
           .eq("dang_hien_thi", true)
           .order("thu_tu_hien_thi", { ascending: true }),
         supabase
           .from("nguon_hoc_lieu")
-          .select("id, ten_nguon")
+          .select("id, ten_nguon, mo_ta, thu_tu_hien_thi")
           .order("thu_tu_hien_thi", { ascending: true })
           .then(({ data, error }) => {
             if (error) return [];
@@ -1116,7 +1106,6 @@ function HocLieuChiTiet() {
           .from("hoc_lieu")
           .select("*")
           .eq("id", Number(materialId))
-          .eq("chu_de_id", topicData.id)
           .eq("da_xuat_ban", true)
           .maybeSingle(),
         supabase
@@ -1145,7 +1134,11 @@ function HocLieuChiTiet() {
 
       if (typeError) {
         setError(`Lỗi tải loại học liệu: ${typeError.message}`);
-      } else if (materialError) {
+        setLoading(false);
+        return;
+      }
+
+      if (materialError) {
         setError(`Lỗi tải học liệu: ${materialError.message}`);
       } else if (!materialData) {
         setError("Không tìm thấy học liệu hoặc học liệu chưa xuất bản.");
